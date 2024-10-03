@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/labstack/echo/v4"
 )
@@ -18,5 +20,7 @@ func main() {
 		return c.JSON(http.StatusOK, res)
 	})
 
-	e.Start(":8080")
+	fmt.Println("Listening on port: ", os.Getenv("SERVER_PORT"))
+
+	e.Start(os.Getenv("SERVER_PORT"))
 }
