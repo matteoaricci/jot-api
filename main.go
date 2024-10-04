@@ -20,7 +20,13 @@ func main() {
 		return c.JSON(http.StatusOK, res)
 	})
 
-	fmt.Println("Listening on port: ", os.Getenv("SERVER_PORT"))
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
 
-	e.Start(os.Getenv("SERVER_PORT"))
+	fmt.Println("Listening on port: ", serverPort)
+
+
+	e.Start(":" + serverPort)
 }
