@@ -10,10 +10,10 @@ import (
 
 func main() {
 	e := echo.New()
-	e.GET("/api/healthz", func(c echo.Context) error  {
+	e.GET("/api/healthz", func(c echo.Context) error {
 		res := struct {
 			Status string `json:"status"`
-		} {
+		}{
 			Status: "OK",
 		}
 
@@ -27,6 +27,8 @@ func main() {
 
 	fmt.Println("Listening on port: ", serverPort)
 
-
-	e.Start(":" + serverPort)
+	err := e.Start(":" + serverPort)
+	if err != nil {
+		return
+	}
 }
