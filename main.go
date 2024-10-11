@@ -10,7 +10,9 @@ import (
 
 func main() {
 	e := echo.New()
+
 	CreateHandler(e)
+
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
 		serverPort = "8080"

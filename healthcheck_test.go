@@ -11,11 +11,11 @@ import (
 func TestEndpoints(t *testing.T) {
 	t.Run("should return 200", func(t *testing.T) {
 		e := echo.New()
+
 		CreateHandler(e)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/healthz", nil)
 		rec := httptest.NewRecorder()
-
 		e.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -23,11 +23,11 @@ func TestEndpoints(t *testing.T) {
 
 	t.Run("should return 404", func(t *testing.T) {
 		e := echo.New()
+
 		CreateHandler(e)
 
 		req := httptest.NewRequest(http.MethodGet, "/route-not-found", nil)
 		rec := httptest.NewRecorder()
-
 		e.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
