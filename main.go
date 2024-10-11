@@ -10,16 +10,7 @@ import (
 
 func main() {
 	e := echo.New()
-	e.GET("/api/healthz", func(c echo.Context) error {
-		res := struct {
-			Status string `json:"status"`
-		}{
-			Status: "OK",
-		}
-
-		return c.JSON(http.StatusOK, res)
-	})
-
+	CreateHandler(e)
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
 		serverPort = "8080"
@@ -31,4 +22,21 @@ func main() {
 	if err != nil {
 		return
 	}
+}
+
+func CreateHandler(e *echo.Echo) {
+	e.RouteNotFound("/*", func(c echo.Context) error {
+		return c.NoContent(http.StatusNotFound)
+	})
+
+	e.GET("/api/healthz", func(c echo.Context) error {
+		fmt.Println("we hit the thing")
+		res := struct {
+			Status string `json:"status"`
+		}{
+			Status: "OK",
+		}
+
+		return c.JSON(http.StatusOK, res)
+	})
 }
