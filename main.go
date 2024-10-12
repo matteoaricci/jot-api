@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -11,7 +12,7 @@ import (
 func main() {
 	e := echo.New()
 
-	CreateHandler(e)
+	addRouteHandlers(e)
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
@@ -22,17 +23,16 @@ func main() {
 
 	err := e.Start(":" + serverPort)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
 }
 
-func CreateHandler(e *echo.Echo) {
+func addRouteHandlers(e *echo.Echo) {
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	})
 
 	e.GET("/api/healthz", func(c echo.Context) error {
-		fmt.Println("we hit the thing")
 		res := struct {
 			Status string `json:"status"`
 		}{
