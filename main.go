@@ -1,7 +1,44 @@
-package jotapi
+package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/labstack/echo/v4"
+)
 
 func main() {
-	fmt.Println("Hello from the jot api!")
+	e := echo.New()
+
+	addRouteHandlers(e)
+
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
+
+	fmt.Println("Listening on port: ", serverPort)
+
+	err := e.Start(":" + serverPort)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func addRouteHandlers(e *echo.Echo) {
+	e.RouteNotFound("/*", func(c echo.Context) error {
+		return c.NoContent(http.StatusNotFound)
+	})
+
+	e.GET("/api/healthz", func(c echo.Context) error {
+		res := struct {
+			Status string `json:"status"`
+		}{
+			Status: "OK",
+		}
+
+		return c.JSON(http.StatusOK, res)
+	})
 }
