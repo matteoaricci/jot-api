@@ -28,9 +28,9 @@ func main() {
 }
 
 func addRouteHandlers(e *echo.Echo) {
-	e.RouteNotFound("/*", func(c echo.Context) error {
+	e.RouteNotFound("/*", Log(func(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
-	})
+	}))
 
 	e.GET("/api/healthz", func(c echo.Context) error {
 		res := struct {
