@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/matteoaricci/jot-api/middleware"
 	"log"
 	"net/http"
 	"os"
@@ -10,7 +11,7 @@ import (
 )
 
 func main() {
-	e := echo.New()
+	e := middleware.Create()
 
 	addRouteHandlers(e)
 
