@@ -10,9 +10,10 @@ import (
 func Create() *echo.Echo {
 	e := echo.New()
 
+	e.Use(middleware.CSRF())
+
 	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-		Skipper:      nil,
-		ErrorMessage: "Timeout",
+		ErrorMessage: "Uh Oh! You Timed Out Bud!",
 		OnTimeoutRouteErrorHandler: func(err error, c echo.Context) {
 			log.Print(c.Path())
 		},
@@ -26,6 +27,19 @@ func Create() *echo.Echo {
 	e.Use(middleware.RecoverWithConfig(middleware.RecoverConfig{
 		StackSize: 1 << 10,
 		LogLevel:  log.ERROR,
+	}))
+
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			formatRequestLog(c, v)
+			return nil
+		},
+		LogLatency:      true,
+		LogMethod:       true,
+		LogRoutePath:    true,
+		LogRequestID:    true,
+		LogStatus:       true,
+		LogResponseSize: true,
 	}))
 
 	return e
