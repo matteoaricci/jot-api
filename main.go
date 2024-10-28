@@ -11,7 +11,9 @@ import (
 )
 
 func main() {
-	e := middleware.Create()
+	e := echo.New()
+
+	middleware.AddMiddleware(e)
 
 	addRouteHandlers(e)
 

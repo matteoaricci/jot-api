@@ -7,17 +7,15 @@ import (
 	"time"
 )
 
-func Create() *echo.Echo {
-	e := echo.New()
-
+func AddMiddleware(e *echo.Echo) {
 	e.Use(middleware.CSRF())
 
 	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		ErrorMessage: "Uh Oh! You Timed Out Bud!",
 		OnTimeoutRouteErrorHandler: func(err error, c echo.Context) {
-			log.Print(c.Path())
+			log.Print(c.Request().RequestURI)
 		},
-		Timeout: 30 * time.Second,
+		Timeout: 0 * time.Second,
 	}))
 
 	e.Use(middleware.RequestID())
@@ -41,6 +39,4 @@ func Create() *echo.Echo {
 		LogStatus:       true,
 		LogResponseSize: true,
 	}))
-
-	return e
 }
