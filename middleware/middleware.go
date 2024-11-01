@@ -8,7 +8,7 @@ import (
 )
 
 func AddMiddleware(e *echo.Echo) {
-	e.Use(middleware.CSRF())
+	//e.Use(middleware.CSRF())
 
 	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		ErrorMessage: "Uh Oh! You Timed Out Bud!",

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/matteoaricci/jot-api/api/journals"
 	"github.com/matteoaricci/jot-api/middleware"
 	"log"
 	"net/http"
@@ -44,4 +45,6 @@ func addRouteHandlers(e *echo.Echo) {
 
 		return c.JSON(http.StatusOK, res)
 	})
+
+	journals.Create(e)
 }
