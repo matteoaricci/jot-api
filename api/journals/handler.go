@@ -2,40 +2,51 @@ package journals
 
 import (
 	"fmt"
+	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
+	"github.com/matteoaricci/jot-api/models/journal"
 	"github.com/matteoaricci/jot-api/service/journal"
 	"net/http"
 )
 
-func Create(e *echo.Echo) {
+func AddRoutes(e *echo.Echo) {
 	g := e.Group("/api/journals")
 
-	g.GET("/", func(c echo.Context) error {
-		j, err := journal.GetAllJournals()
+	g.GET("", func(c echo.Context) error {
+		j, err := journal.All()
 		if err != nil {
-			return err
+			return c.JSON(err.Code, err)
 		}
 
 		return c.JSON(http.StatusOK, j)
 	})
 
-	g.POST("/", func(c echo.Context) error {
-		var j journal.Journal
+	g.POST("", func(c echo.Context) error {
+		e.Validator = &models.CreateJournalValidator{Validator: validator.New()}
+		var j models.CreateJournalVM
+
 		err := c.Bind(&j)
-
-		newJs, err := journal.CreateJournal(j)
-
 		if err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+
+		if err = c.Validate(&j); err != nil {
 			return err
 		}
 
-		return c.JSON(http.StatusCreated, newJs)
+		newJ, httpErr := journal.Create(j)
+
+		if httpErr != nil {
+			return httpErr
+		}
+
+		return c.JSON(http.StatusCreated, newJ)
 	})
 
 	g.GET("/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
-		j, err := journal.GetJournal(id)
+		j, err := journal.Get(id)
 		if err != nil {
 			return err
 		}
@@ -46,17 +57,15 @@ func Create(e *echo.Echo) {
 	g.DELETE("/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
-		j, err := journal.DeleteJournal(id)
+		_, err := journal.Delete(id)
 		if err != nil {
 			return err
 		}
 
 		res := struct {
-			Message  string            `json:"message"`
-			Journals []journal.Journal `json:"journals"`
+			Message string `json:"message"`
 		}{
-			Message:  fmt.Sprintf("Hey diva! We did delete journal with id: %s.", id),
-			Journals: *j,
+			Message: fmt.Sprintf("Hey diva! We did delete journal with id: %s.", id),
 		}
 
 		return c.JSON(http.StatusOK, res)
@@ -65,14 +74,14 @@ func Create(e *echo.Echo) {
 	g.PATCH("/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
-		var j journal.Journal
+		var j models.JournalVM
 
 		err := c.Bind(&j)
 		if err != nil {
 			return err
 		}
 
-		newJ, err := journal.PatchJournal(id, j)
+		newJ, err := journal.Patch(id, j)
 		if err != nil {
 			return err
 		}

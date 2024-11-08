@@ -1,17 +1,14 @@
 package journal
 
 import (
-	"errors"
+	"fmt"
+	"github.com/labstack/echo/v4"
+	"github.com/matteoaricci/jot-api/models/journal"
+	"net/http"
 	"strconv"
 )
 
-type Journal struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	ID          string `json:"id"`
-}
-
-var existingJournals = []Journal{{
+var existingJournals = []models.JournalVM{{
 	Title:       "Psychopomp",
 	Description: "Japanese Breakfast's first album",
 	ID:          "1",
@@ -25,50 +22,61 @@ var existingJournals = []Journal{{
 	ID:          "3",
 }}
 
-func DeleteJournal(id string) (*[]Journal, error) {
+func Delete(id string) ([]models.JournalVM, *echo.HTTPError) {
 	j := findJournal(id)
 	if j == nil {
-		return nil, errors.New("journal not found")
+		return nil, &echo.HTTPError{
+			Code:    http.StatusNotFound,
+			Message: fmt.Sprintf("Unable to find journal with id %s", id),
+		}
 	}
 
-	filteredJournals := make([]Journal, 0)
+	filteredJournals := make([]models.JournalVM, 0)
 	for _, v := range existingJournals {
 		if v.ID != id {
 			filteredJournals = append(filteredJournals, v)
 		}
 	}
 
-	return &filteredJournals, nil
+	return filteredJournals, nil
 }
 
-func GetAllJournals() (*[]Journal, error) {
-	return &existingJournals, nil
+func All() ([]models.JournalVM, *echo.HTTPError) {
+	return existingJournals, nil
 }
 
-func GetJournal(id string) (*Journal, error) {
+func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 	j := findJournal(id)
 
 	if j == nil {
-		return nil, errors.New("journal not found")
+		return nil, &echo.HTTPError{
+			Code:    http.StatusNotFound,
+			Message: fmt.Sprintf("Unable to find journal with id %s", id),
+		}
 	}
 
 	return j, nil
 }
 
-func CreateJournal(newJournal Journal) (*[]Journal, error) {
+func Create(newJournal models.CreateJournalVM) (*models.JournalVM, *echo.HTTPError) {
 	id := len(existingJournals)
-	newJournal.ID = strconv.Itoa(id)
+	j := models.JournalVM{
+		Title:       newJournal.Title,
+		Description: newJournal.Description,
+		ID:          strconv.Itoa(id),
+	}
 
-	existingJournals = append(existingJournals, newJournal)
-
-	return &existingJournals, nil
+	return &j, nil
 }
 
-func PatchJournal(id string, journal Journal) (*Journal, error) {
+func Patch(id string, journal models.JournalVM) (*models.JournalVM, *echo.HTTPError) {
 	j := findJournal(id)
 
 	if j == nil {
-		return nil, errors.New("journal not found")
+		return nil, &echo.HTTPError{
+			Code:    http.StatusNotFound,
+			Message: fmt.Sprintf("Unable to find journal with id %s", id),
+		}
 	}
 
 	j.Title = journal.Title
@@ -77,13 +85,12 @@ func PatchJournal(id string, journal Journal) (*Journal, error) {
 	return j, nil
 }
 
-func findJournal(id string) *Journal {
-	var j *Journal
+func findJournal(id string) *models.JournalVM {
 	for _, v := range existingJournals {
 		if v.ID == id {
-			j = &v
+			return &v
 		}
 	}
 
-	return j
+	return nil
 }

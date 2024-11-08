@@ -26,7 +26,7 @@ func TestEndpoints(t *testing.T) {
 	t.Run("unknown route should return 404", func(t *testing.T) {
 		e := echo.New()
 
-		addRouteHandlers(e)
+		main.addRouteHandlers(e)
 
 		req := httptest.NewRequest(http.MethodGet, "/route-not-found", nil)
 		rec := httptest.NewRecorder()

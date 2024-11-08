@@ -16,7 +16,7 @@ func main() {
 
 	middleware.AddMiddleware(e)
 
-	addRouteHandlers(e)
+	AddRouteHandlers(e)
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
@@ -31,7 +31,9 @@ func main() {
 	}
 }
 
-func addRouteHandlers(e *echo.Echo) {
+func AddRouteHandlers(e *echo.Echo) {
+	journals.AddRoutes(e)
+
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	})
@@ -45,6 +47,4 @@ func addRouteHandlers(e *echo.Echo) {
 
 		return c.JSON(http.StatusOK, res)
 	})
-
-	journals.Create(e)
 }
