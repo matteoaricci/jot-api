@@ -58,7 +58,7 @@ func TestEndpoints(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			var b bytes.Buffer
 
-			dummyData := models.CreateJournalVM{
+			dummyData := models.CreateOrPutJournalVM{
 				Title:       "dummy title",
 				Description: "dummy desc",
 			}
@@ -104,7 +104,7 @@ func TestEndpoints(t *testing.T) {
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
 			assert.JSONEq(t,
 				// language=JSON
-				`{"message":"Key: 'CreateJournalVM.Description' Error:Field validation for 'Description' failed on the 'required' tag"}`, rec.Body.String())
+				`{"message":"Key: 'CreateOrPutJournalVM.Description' Error:Field validation for 'Description' failed on the 'required' tag"}`, rec.Body.String())
 		})
 	})
 
@@ -112,6 +112,80 @@ func TestEndpoints(t *testing.T) {
 		e := echo.New()
 		AddRoutes(e)
 
+		t.Run("success", func(t *testing.T) {
+			var b bytes.Buffer
+
+			dummyData := models.CreateOrPutJournalVM{
+				Title:       "dummy title",
+				Description: "dummy desc",
+			}
+
+			err := json.NewEncoder(&b).Encode(dummyData)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			req := httptest.NewRequest(http.MethodPut, "/api/journals/2", &b)
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.JSONEq(t,
+				// language=JSON
+				`{"title":"dummy title","description":"dummy desc", "id":  "2"}`,
+				rec.Body.String())
+		})
+
+		t.Run("not found", func(t *testing.T) {
+			var b bytes.Buffer
+
+			dummyData := models.CreateOrPutJournalVM{
+				Title:       "dummy title",
+				Description: "dummy desc",
+			}
+
+			err := json.NewEncoder(&b).Encode(dummyData)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			req := httptest.NewRequest(http.MethodPut, "/api/journals/5", &b)
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			assert.Equal(t, http.StatusNotFound, rec.Code)
+		})
+
+		t.Run("missing data", func(t *testing.T) {
+			var b bytes.Buffer
+
+			dummyData := struct {
+				Title string `json:"title"`
+			}{
+				Title: "dummy title",
+			}
+
+			err := json.NewEncoder(&b).Encode(dummyData)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			req := httptest.NewRequest(http.MethodPut, "/api/journals/2", &b)
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			assert.Equal(t, http.StatusBadRequest, rec.Code)
+			assert.JSONEq(t,
+				// language=JSON
+				`{"message":"Key: 'CreateOrPutJournalVM.Description' Error:Field validation for 'Description' failed on the 'required' tag"}`, rec.Body.String())
+
+		})
 	})
 
 	t.Run("Delete journal", func(t *testing.T) {
@@ -122,7 +196,7 @@ func TestEndpoints(t *testing.T) {
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
-			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.Equal(t, http.StatusNoContent, rec.Code)
 		})
 
 		t.Run("not found", func(t *testing.T) {

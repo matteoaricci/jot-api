@@ -58,7 +58,7 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 	return j, nil
 }
 
-func Create(newJournal models.CreateJournalVM) (*models.JournalVM, *echo.HTTPError) {
+func Create(newJournal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
 	id := len(existingJournals)
 	j := models.JournalVM{
 		Title:       newJournal.Title,
@@ -69,7 +69,7 @@ func Create(newJournal models.CreateJournalVM) (*models.JournalVM, *echo.HTTPErr
 	return &j, nil
 }
 
-func Patch(id string, journal models.JournalVM) (*models.JournalVM, *echo.HTTPError) {
+func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
 	j := findJournal(id)
 
 	if j == nil {

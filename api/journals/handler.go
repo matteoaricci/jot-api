@@ -1,7 +1,6 @@
 package journals
 
 import (
-	"fmt"
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/journal"
@@ -22,8 +21,8 @@ func AddRoutes(e *echo.Echo) {
 	})
 
 	g.POST("", func(c echo.Context) error {
-		e.Validator = &models.CreateJournalValidator{Validator: validator.New()}
-		var j models.CreateJournalVM
+		e.Validator = &models.CreateOrPutJournalValidator{Validator: validator.New()}
+		var j models.CreateOrPutJournalVM
 
 		err := c.Bind(&j)
 		if err != nil {
@@ -62,28 +61,27 @@ func AddRoutes(e *echo.Echo) {
 			return err
 		}
 
-		res := struct {
-			Message string `json:"message"`
-		}{
-			Message: fmt.Sprintf("Hey diva! We did delete journal with id: %s.", id),
-		}
-
-		return c.JSON(http.StatusOK, res)
+		return c.NoContent(http.StatusNoContent)
 	})
 
-	g.PATCH("/:id", func(c echo.Context) error {
+	g.PUT("/:id", func(c echo.Context) error {
+		e.Validator = &models.CreateOrPutJournalValidator{Validator: validator.New()}
 		id := c.Param("id")
 
-		var j models.JournalVM
+		var j models.CreateOrPutJournalVM
 
 		err := c.Bind(&j)
 		if err != nil {
 			return err
 		}
 
-		newJ, err := journal.Patch(id, j)
-		if err != nil {
+		if err = c.Validate(&j); err != nil {
 			return err
+		}
+
+		newJ, httpErr := journal.Put(id, j)
+		if httpErr != nil {
+			return httpErr
 		}
 
 		return c.JSON(http.StatusOK, newJ)
