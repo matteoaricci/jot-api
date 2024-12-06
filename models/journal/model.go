@@ -8,8 +8,8 @@ import (
 
 type (
 	CreateOrPutJournalVM struct {
-		Title       string `json:"title" validate:"required, max=256"`
-		Description string `json:"description" validate:"required, max=256"`
+		Title       string `json:"title" validate:"required,max=256"`
+		Description string `json:"description" validate:"required,max=256"`
 	}
 
 	CreateOrPutJournalValidator struct {
