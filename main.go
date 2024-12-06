@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/matteoaricci/jot-api/api/journals"
+	"github.com/matteoaricci/jot-api/db"
 	"github.com/matteoaricci/jot-api/middleware"
 	"log"
 	"net/http"
@@ -17,6 +18,8 @@ func main() {
 	middleware.AddMiddleware(e)
 
 	AddRouteHandlers(e)
+
+	db.ConnectToDB()
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
