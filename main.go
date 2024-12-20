@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/matteoaricci/jot-api/api/journals"
 	"github.com/matteoaricci/jot-api/middleware"
 	"log"
 	"net/http"
@@ -15,7 +16,7 @@ func main() {
 
 	middleware.AddMiddleware(e)
 
-	addRouteHandlers(e)
+	AddRouteHandlers(e)
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
@@ -30,7 +31,9 @@ func main() {
 	}
 }
 
-func addRouteHandlers(e *echo.Echo) {
+func AddRouteHandlers(e *echo.Echo) {
+	journals.AddRoutes(e)
+
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)
 	})
