@@ -6,11 +6,9 @@ import (
 	"log"
 )
 
-type DB struct {
-	db *gorm.DB
-}
+var DB *gorm.DB
 
-func ConnectToDB() *DB {
+func ConnectToDB() {
 	dsn := "host=localhost user=matteoaricci password=matteo101 dbname=jot_db port=5432 sslmode=disable"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
@@ -18,5 +16,5 @@ func ConnectToDB() *DB {
 		log.Fatal(err)
 	}
 
-	return &DB{db: db}
+	DB = db
 }

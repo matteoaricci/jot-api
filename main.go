@@ -5,12 +5,15 @@ import (
 	"github.com/matteoaricci/jot-api/api/journals"
 	"github.com/matteoaricci/jot-api/db"
 	"github.com/matteoaricci/jot-api/middleware"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/labstack/echo/v4"
 )
+
+var DB *gorm.DB
 
 func main() {
 	e := echo.New()
@@ -19,7 +22,7 @@ func main() {
 
 	AddRouteHandlers(e)
 
-	db.ConnectToDB()
+	DB = db.ConnectToDB()
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
