@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/journal"
+	"github.com/matteoaricci/jot-api/repo"
 	"net/http"
 	"strconv"
 )
@@ -47,6 +48,12 @@ func All() ([]models.JournalVM, *echo.HTTPError) {
 
 func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 	j := findJournal(id)
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, &echo.HTTPError{}
+	}
+	
+	repo.JournalRepo{}.GetJournalByID(intId)
 
 	if j == nil {
 		return nil, &echo.HTTPError{

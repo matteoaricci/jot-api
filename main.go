@@ -24,8 +24,6 @@ func main() {
 
 	repo.InitJournalRepo()
 
-	//DB = db.ConnectToDB()
-
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
 		serverPort = "8080"

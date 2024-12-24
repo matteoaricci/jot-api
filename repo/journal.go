@@ -1,11 +1,15 @@
 package repo
 
 import (
+	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 )
 
+type Journals struct {
+	gorm.Model
+}
 type JournalRepo struct {
 }
 
@@ -22,6 +26,8 @@ func InitJournalRepo() {
 	DB = db
 }
 
-func (j JournalRepo) GetJournalByID(id int) error {
-	
+func (j JournalRepo) GetJournalByID(id int) *gorm.DB {
+	row := DB.First(&Journals{}, id)
+	fmt.Println(row)
+	return row
 }
