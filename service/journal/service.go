@@ -9,51 +9,30 @@ import (
 	"strconv"
 )
 
-var existingJournals = []models.JournalVM{{
-	Title:       "Psychopomp",
-	Description: "Japanese Breakfast's first album",
-	ID:          "1",
-}, {
-	Title:       "Soft Sounds from Another Planet",
-	Description: "Absolute banger followup",
-	ID:          "2",
-}, {
-	Title:       "Jubilee",
-	Description: "Here Michelle Zauner asks: what if joy was as complex as grief",
-	ID:          "3",
-}}
-
-func Delete(id string) ([]models.JournalVM, *echo.HTTPError) {
-	j := findJournal(id)
-	if j == nil {
-		return nil, &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Unable to find journal with id %s", id),
-		}
+func Delete(id string) *echo.HTTPError {
+	err := repo.DeleteJournal(id)
+	if err != nil {
+		return err
 	}
 
-	filteredJournals := make([]models.JournalVM, 0)
-	for _, v := range existingJournals {
-		if v.ID != id {
-			filteredJournals = append(filteredJournals, v)
-		}
-	}
-
-	return filteredJournals, nil
+	return nil
 }
 
 func All() ([]models.JournalVM, *echo.HTTPError) {
-	return existingJournals, nil
+	journals, err := repo.GetAllJournals()
+	if err != nil {
+		return nil, err
+	}
+
+	return journals
 }
 
 func Get(id string) (*models.JournalVM, *echo.HTTPError) {
-	intId, err := strconv.Atoi(id)
-	if err != nil {
-		return nil, &echo.HTTPError{}
+
+	j, jErr := repo.GetJournalByID(id)
+	if jErr != nil {
+		return nil, jErr
 	}
-
-	j := repo.GetJournalByID(intId)
-
 	if j == nil {
 		return nil, &echo.HTTPError{
 			Code:    http.StatusNotFound,
@@ -71,14 +50,12 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 }
 
 func Create(newJournal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
-	id := len(existingJournals)
-	j := models.JournalVM{
-		Title:       newJournal.Title,
-		Description: newJournal.Description,
-		ID:          strconv.Itoa(id),
+	journal, err := repo.CreateJournal(newJournal.Title, newJournal.Description)
+	if err != nil {
+		return nil, err
 	}
 
-	return &j, nil
+	return &journal, nil
 }
 
 func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
@@ -95,16 +72,6 @@ func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *ec
 	j.Description = journal.Description
 
 	return j, nil
-}
-
-func findJournal(id string) *models.JournalVM {
-	for _, v := range existingJournals {
-		if v.ID == id {
-			return &v
-		}
-	}
-
-	return nil
 }
 
 func convertUintToString(input uint) string {
