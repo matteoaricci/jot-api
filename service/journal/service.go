@@ -47,13 +47,12 @@ func All() ([]models.JournalVM, *echo.HTTPError) {
 }
 
 func Get(id string) (*models.JournalVM, *echo.HTTPError) {
-	j := findJournal(id)
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		return nil, &echo.HTTPError{}
 	}
-	
-	repo.JournalRepo{}.GetJournalByID(intId)
+
+	j := repo.GetJournalByID(intId)
 
 	if j == nil {
 		return nil, &echo.HTTPError{
@@ -62,7 +61,13 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 		}
 	}
 
-	return j, nil
+	jVM := models.JournalVM{
+		Title:       j.Title,
+		Description: j.Description,
+		ID:          convertUintToString(j.ID),
+	}
+
+	return &jVM, nil
 }
 
 func Create(newJournal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
@@ -100,4 +105,8 @@ func findJournal(id string) *models.JournalVM {
 	}
 
 	return nil
+}
+
+func convertUintToString(input uint) string {
+	return strconv.FormatUint(uint64(input), 10)
 }

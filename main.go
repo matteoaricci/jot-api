@@ -3,17 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/matteoaricci/jot-api/api/journals"
+	"github.com/matteoaricci/jot-api/db"
 	"github.com/matteoaricci/jot-api/middleware"
-	"github.com/matteoaricci/jot-api/repo"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/labstack/echo/v4"
 )
-
-var DB *gorm.DB
 
 func main() {
 	e := echo.New()
@@ -22,7 +19,7 @@ func main() {
 
 	AddRouteHandlers(e)
 
-	repo.InitJournalRepo()
+	db.InitDB()
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
