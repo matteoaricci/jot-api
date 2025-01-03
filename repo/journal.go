@@ -13,8 +13,6 @@ type Journals struct {
 	Title       string `gorm:"type:text"`
 	Description string `gorm:"type:text"`
 }
-type JournalRepo struct {
-}
 
 var DB *gorm.DB
 

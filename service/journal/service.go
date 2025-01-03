@@ -20,6 +20,7 @@ func Delete(id string) *echo.HTTPError {
 
 func All() ([]models.JournalVM, *echo.HTTPError) {
 	journals, err := repo.GetAllJournals()
+
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +52,7 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 
 func Create(newJournal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
 	journal, err := repo.CreateJournal(newJournal.Title, newJournal.Description)
+
 	if err != nil {
 		return nil, err
 	}
