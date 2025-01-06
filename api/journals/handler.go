@@ -56,7 +56,7 @@ func AddRoutes(e *echo.Echo) {
 	g.DELETE("/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
-		_, err := journal.Delete(id)
+		err := journal.Delete(id)
 		if err != nil {
 			return err
 		}
