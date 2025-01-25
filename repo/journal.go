@@ -2,9 +2,7 @@ package repo
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
-	"net/http"
 	"time"
 )
 
@@ -23,54 +21,65 @@ func InitJournalRepo(dB *gorm.DB) {
 	db = dB
 }
 
-func GetAllJournals() ([]Journal, *echo.HTTPError) {
+func GetAllJournals() ([]Journal, error) {
 	var journal []Journal
 
 	row := db.Find(&journal)
 	if row.Error != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to fetch all journals")
+		return nil, row.Error
 	}
 
 	return journal, nil
 }
 
-func GetJournalByID(id string) (*Journal, *echo.HTTPError) {
+func GetJournalByID(id string) (*Journal, error) {
 	var journal Journal
 
 	row := db.First(&journal, id)
 	if row.Error != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to fetch journal with id %s", id))
+		return nil, row.Error
 	}
 
 	return &journal, nil
 }
 
-func CreateJournal(title string, description string) (*Journal, *echo.HTTPError) {
+func CreateJournal(title string, description string) (*Journal, error) {
 	journal := Journal{Title: title, Description: description}
 	err := db.Create(&journal).Error
 
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to create journal")
+		return nil, err
 	}
 
 	return &journal, nil
 }
 
-func UpdateJournal(id string, title string, description string) (*Journal, *echo.HTTPError) {
-	journal := Journal{Title: title, Description: description}
+func UpdateJournal(id uint64, title string, description string) (*Journal, error) {
+	row := db.First(&Journal{}, id)
+	if row.Error != nil {
+		return nil, row.Error
+	}
+	journal := Journal{ID: id, Title: title, Description: description}
 
 	if err := db.Save(&journal).Error; err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to update journal with id %s", id))
+		return nil, err
 	}
 
 	return &journal, nil
 }
 
-func DeleteJournal(id string) *echo.HTTPError {
+func DeleteJournal(id string) error {
+	row := db.First(&Journal{}, id)
+	if row.Error != nil {
+		return row.Error
+	}
+
 	var journal Journal
 
-	if err := db.Delete(&journal, id).Error; err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to delete journal with id %d", id))
+	err := db.Delete(&journal, id).Error
+	if err != nil {
+		fmt.Sprintf("hello")
+		return err
 	}
 
 	return nil

@@ -1,18 +1,15 @@
-package main
+package api
 
 import (
-	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func TestEndpoints(t *testing.T) {
+func TestMainEndpoints(t *testing.T) {
 	t.Run("health check endpoint should return 200", func(t *testing.T) {
-		e := echo.New()
-
-		addRouteHandlers(e)
+		e := Server
 
 		req := httptest.NewRequest(http.MethodGet, "/api/healthz", nil)
 		rec := httptest.NewRecorder()
@@ -24,9 +21,7 @@ func TestEndpoints(t *testing.T) {
 	})
 
 	t.Run("unknown route should return 404", func(t *testing.T) {
-		e := echo.New()
-
-		main.addRouteHandlers(e)
+		e := Server
 
 		req := httptest.NewRequest(http.MethodGet, "/route-not-found", nil)
 		rec := httptest.NewRecorder()
