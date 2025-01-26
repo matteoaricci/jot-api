@@ -11,7 +11,37 @@ import (
 func main() {
 	e := api.ConstructServer()
 
-	db.InitDB("localhost", 5432, "matteoaricci", "matteo101", "jot_db")
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "5432"
+	}
+
+	sslmode := os.Getenv("DB_SSLMODE")
+	if sslmode == "" {
+		sslmode = "disable"
+	}
+
+	username := os.Getenv("DB_USERNAME")
+	if username == "" {
+		log.Fatal("DB_USER environment variable not set")
+	}
+
+	password := os.Getenv("DB_PASSWORD")
+	if password == "" {
+		log.Fatal("DB_PASSWORD environment variable not set")
+	}
+
+	dbname := os.Getenv("DB_NAME")
+	if dbname == "" {
+		log.Fatal("DB_NAME environment variable not set")
+	}
+
+	db.InitDB(host, port, username, password, dbname, sslmode)
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
