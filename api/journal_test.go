@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/api/journals"
 	"github.com/matteoaricci/jot-api/models/journal"
@@ -21,6 +22,7 @@ func TestJournalEndpoints(t *testing.T) {
 		e.ServeHTTP(rec, req)
 
 		assert.Equal(t, http.StatusOK, rec.Code)
+		fmt.Println(rec.Body.String())
 		assert.JSONEq(t,
 			// language=JSON
 			`[{"title":"Psychopomp","description":"Japanese Breakfast's first album","id":"1"},
