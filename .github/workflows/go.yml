@@ -22,10 +22,4 @@ jobs:
         go-version: '1.22.5'
 
     - name: Test
-      run: |
-        touch dev.env
-        echo DB_USERNAME=${{secrets.DB_USERNAME}} >> dev.env
-        echo DB_PASSWORD=${{secrets.DB_PASSWORD}} >> dev.env
-        echo DB_NAME=${{secrets.DB_NAME}} >> dev.env
-        cat dev.env
-        go test -v ./...
+      run: go test -v ./...

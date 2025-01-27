@@ -25,20 +25,9 @@ var TestDB *gorm.DB
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
-	dbUsername := os.Getenv("DB_USERNAME")
-	if dbUsername == "" {
-		log.Fatal("DB_USER environment variable not set")
-	}
-
-	dbPassword := os.Getenv("DB_PASSWORD")
-	if dbPassword == "" {
-		log.Fatal("DB_PASSWORD environment variable not set")
-	}
-
-	dbName := os.Getenv("DB_NAME")
-	if dbName == "" {
-		log.Fatal("DB_NAME environment variable not set")
-	}
+	dbUsername := "matteoaricci"
+	dbPassword := "matteo101"
+	dbName := "jot_db"
 
 	postgresContainer, err := postgres.Run(ctx,
 		"postgres:16-alpine",
