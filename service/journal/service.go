@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/journal"
 	"github.com/matteoaricci/jot-api/repo"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -11,7 +12,7 @@ import (
 func Delete(id string) *echo.HTTPError {
 	err := repo.DeleteJournal(id)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -22,9 +23,6 @@ func Delete(id string) *echo.HTTPError {
 func All() ([]models.JournalVM, *echo.HTTPError) {
 	jRepos, err := repo.GetAllJournals()
 	if err != nil {
-		if err.Error() == "record not found" {
-			return nil, echo.NewHTTPError(http.StatusNotFound)
-		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -36,7 +34,7 @@ func All() ([]models.JournalVM, *echo.HTTPError) {
 func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 	j, err := repo.GetJournalByID(id)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -50,9 +48,6 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 func Create(newJournal models.CreateOrPutJournalVM) (*string, *echo.HTTPError) {
 	j, err := repo.CreateJournal(newJournal.Title, newJournal.Description)
 	if err != nil {
-		if err.Error() == "record not found" {
-			return nil, echo.NewHTTPError(http.StatusNotFound)
-		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if j == nil {
@@ -70,14 +65,14 @@ func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *ec
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	jRepo, err := repo.UpdateJournal(id64, journal.Title, journal.Description)
+	j, err := repo.UpdateJournal(id64, journal.Title, journal.Description)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	jVM := MapRepoToVM(*jRepo)
+	jVM := MapRepoToVM(*j)
 
 	return &jVM, nil
 }
