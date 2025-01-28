@@ -11,6 +11,7 @@ func MapRepoToVM(j repo.Journal) models.JournalVM {
 		Title:       j.Title,
 		Description: j.Description,
 		ID:          strconv.FormatUint(j.ID, 10),
+		Completed:   j.Completed,
 	}
 }
 

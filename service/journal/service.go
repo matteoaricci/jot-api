@@ -19,8 +19,8 @@ func Delete(id string) *echo.HTTPError {
 	return nil
 }
 
-func All() ([]models.JournalVM, *echo.HTTPError) {
-	jRepos, err := repo.GetAllJournals()
+func All(params models.JournalQueryParams) ([]models.JournalVM, *echo.HTTPError) {
+	jRepos, err := repo.GetAllJournals(params)
 	if err != nil {
 		if err.Error() == "record not found" {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
@@ -48,7 +48,7 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 }
 
 func Create(newJournal models.CreateOrPutJournalVM) (*string, *echo.HTTPError) {
-	j, err := repo.CreateJournal(newJournal.Title, newJournal.Description)
+	j, err := repo.CreateJournal(newJournal.Title, newJournal.Description, newJournal.Completed)
 	if err != nil {
 		if err.Error() == "record not found" {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
@@ -70,7 +70,7 @@ func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *ec
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	jRepo, err := repo.UpdateJournal(id64, journal.Title, journal.Description)
+	jRepo, err := repo.UpdateJournal(id64, journal.Title, journal.Description, journal.Completed)
 	if err != nil {
 		if err.Error() == "record not found" {
 			return nil, echo.NewHTTPError(http.StatusNotFound)

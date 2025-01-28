@@ -28,7 +28,7 @@ func main() {
 
 	username := os.Getenv("DB_USERNAME")
 	if username == "" {
-		log.Fatal("DB_USER environment variable not set")
+		log.Fatal("DB_USERNAME environment variable not set")
 	}
 
 	password := os.Getenv("DB_PASSWORD")

@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE journal
+CREATE TABLE IF NOT EXISTS journal
 (
     id          SERIAL PRIMARY KEY,
     created_at  TIMESTAMP,

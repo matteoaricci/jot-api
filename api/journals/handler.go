@@ -1,7 +1,6 @@
 package journals
 
 import (
-	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/journal"
 	"github.com/matteoaricci/jot-api/service/journal"
@@ -10,7 +9,16 @@ import (
 
 func AddRoutes(e *echo.Echo) {
 	e.GET("/api/journals", func(c echo.Context) error {
-		j, err := journal.All()
+		var params models.JournalQueryParams
+		bindErr := c.Bind(&params)
+		if bindErr != nil {
+			return c.String(http.StatusBadRequest, "bad request")
+		}
+		if err := models.Validate(&params); err != nil {
+			return c.JSON(http.StatusBadRequest, err)
+		}
+
+		j, err := journal.All(params)
 		if err != nil {
 			return c.JSON(err.Code, err)
 		}
@@ -19,7 +27,6 @@ func AddRoutes(e *echo.Echo) {
 	})
 
 	e.POST("/api/journals", func(c echo.Context) error {
-		e.Validator = &models.CreateOrPutJournalValidator{Validator: validator.New()}
 		var j models.CreateOrPutJournalVM
 
 		err := c.Bind(&j)
@@ -27,7 +34,7 @@ func AddRoutes(e *echo.Echo) {
 			return c.JSON(http.StatusBadRequest, err)
 		}
 
-		if err = c.Validate(&j); err != nil {
+		if err = models.Validate(&j); err != nil {
 			return err
 		}
 
@@ -63,7 +70,6 @@ func AddRoutes(e *echo.Echo) {
 	})
 
 	e.PUT("/api/journals/:id", func(c echo.Context) error {
-		e.Validator = &models.CreateOrPutJournalValidator{Validator: validator.New()}
 		id := c.Param("id")
 
 		var j models.CreateOrPutJournalVM
@@ -73,7 +79,7 @@ func AddRoutes(e *echo.Echo) {
 			return err
 		}
 
-		if err = c.Validate(&j); err != nil {
+		if err = models.Validate(&j); err != nil {
 			return err
 		}
 
