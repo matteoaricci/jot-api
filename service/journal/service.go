@@ -1,96 +1,78 @@
 package journal
 
 import (
-	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/journal"
+	"github.com/matteoaricci/jot-api/repo"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
 
-var existingJournals = []models.JournalVM{{
-	Title:       "Psychopomp",
-	Description: "Japanese Breakfast's first album",
-	ID:          "1",
-}, {
-	Title:       "Soft Sounds from Another Planet",
-	Description: "Absolute banger followup",
-	ID:          "2",
-}, {
-	Title:       "Jubilee",
-	Description: "Here Michelle Zauner asks: what if joy was as complex as grief",
-	ID:          "3",
-}}
-
-func Delete(id string) ([]models.JournalVM, *echo.HTTPError) {
-	j := findJournal(id)
-	if j == nil {
-		return nil, &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Unable to find journal with id %s", id),
+func Delete(id string) *echo.HTTPError {
+	err := repo.DeleteJournal(id)
+	if err != nil {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
+			return echo.NewHTTPError(http.StatusNotFound)
 		}
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
-	filteredJournals := make([]models.JournalVM, 0)
-	for _, v := range existingJournals {
-		if v.ID != id {
-			filteredJournals = append(filteredJournals, v)
-		}
-	}
-
-	return filteredJournals, nil
+	return nil
 }
 
 func All() ([]models.JournalVM, *echo.HTTPError) {
-	return existingJournals, nil
+	jRepos, err := repo.GetAllJournals()
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	jVMs := MapRepoSliceToVMSlice(jRepos)
+
+	return jVMs, nil
 }
 
 func Get(id string) (*models.JournalVM, *echo.HTTPError) {
-	j := findJournal(id)
-
-	if j == nil {
-		return nil, &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Unable to find journal with id %s", id),
+	j, err := repo.GetJournalByID(id)
+	if err != nil {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
+			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return j, nil
+	jVM := MapRepoToVM(*j)
+
+	return &jVM, nil
 }
 
-func Create(newJournal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
-	id := len(existingJournals)
-	j := models.JournalVM{
-		Title:       newJournal.Title,
-		Description: newJournal.Description,
-		ID:          strconv.Itoa(id),
+func Create(newJournal models.CreateOrPutJournalVM) (*string, *echo.HTTPError) {
+	j, err := repo.CreateJournal(newJournal.Title, newJournal.Description)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if j == nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Unable to create journal")
 	}
 
-	return &j, nil
+	jVM := MapRepoToVM(*j)
+
+	return &jVM.ID, nil
 }
 
 func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
-	j := findJournal(id)
-
-	if j == nil {
-		return nil, &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("Unable to find journal with id %s", id),
-		}
+	id64, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	j.Title = journal.Title
-	j.Description = journal.Description
-
-	return j, nil
-}
-
-func findJournal(id string) *models.JournalVM {
-	for _, v := range existingJournals {
-		if v.ID == id {
-			return &v
+	j, err := repo.UpdateJournal(id64, journal.Title, journal.Description)
+	if err != nil {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
+			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	jVM := MapRepoToVM(*j)
 
-	return nil
+	return &jVM, nil
 }

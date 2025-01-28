@@ -10,6 +10,10 @@ import (
 func AddMiddleware(e *echo.Echo) {
 	//e.Use(middleware.CSRF())
 
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+	}))
+
 	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
 		ErrorMessage: "Uh Oh! You Timed Out Bud!",
 		OnTimeoutRouteErrorHandler: func(err error, c echo.Context) {

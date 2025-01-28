@@ -2,21 +2,46 @@ package main
 
 import (
 	"fmt"
-	"github.com/matteoaricci/jot-api/api/journals"
-	"github.com/matteoaricci/jot-api/middleware"
+	"github.com/matteoaricci/jot-api/api"
+	"github.com/matteoaricci/jot-api/db"
 	"log"
-	"net/http"
 	"os"
-
-	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	e := echo.New()
+	e := api.ConstructServer()
 
-	middleware.AddMiddleware(e)
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "localhost"
+	}
 
-	AddRouteHandlers(e)
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "5432"
+	}
+
+	sslmode := os.Getenv("DB_SSLMODE")
+	if sslmode == "" {
+		sslmode = "disable"
+	}
+
+	username := os.Getenv("DB_USERNAME")
+	if username == "" {
+		log.Fatal("DB_USER environment variable not set")
+	}
+
+	password := os.Getenv("DB_PASSWORD")
+	if password == "" {
+		log.Fatal("DB_PASSWORD environment variable not set")
+	}
+
+	dbname := os.Getenv("DB_NAME")
+	if dbname == "" {
+		log.Fatal("DB_NAME environment variable not set")
+	}
+
+	db.InitDB(host, port, username, password, dbname, sslmode)
 
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
@@ -29,22 +54,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func AddRouteHandlers(e *echo.Echo) {
-	journals.AddRoutes(e)
-
-	e.RouteNotFound("/*", func(c echo.Context) error {
-		return c.NoContent(http.StatusNotFound)
-	})
-
-	e.GET("/api/healthz", func(c echo.Context) error {
-		res := struct {
-			Status string `json:"status"`
-		}{
-			Status: "OK",
-		}
-
-		return c.JSON(http.StatusOK, res)
-	})
 }

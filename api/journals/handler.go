@@ -9,9 +9,7 @@ import (
 )
 
 func AddRoutes(e *echo.Echo) {
-	g := e.Group("/api/journals")
-
-	g.GET("", func(c echo.Context) error {
+	e.GET("/api/journals", func(c echo.Context) error {
 		j, err := journal.All()
 		if err != nil {
 			return c.JSON(err.Code, err)
@@ -20,7 +18,7 @@ func AddRoutes(e *echo.Echo) {
 		return c.JSON(http.StatusOK, j)
 	})
 
-	g.POST("", func(c echo.Context) error {
+	e.POST("/api/journals", func(c echo.Context) error {
 		e.Validator = &models.CreateOrPutJournalValidator{Validator: validator.New()}
 		var j models.CreateOrPutJournalVM
 
@@ -33,16 +31,16 @@ func AddRoutes(e *echo.Echo) {
 			return err
 		}
 
-		newJ, httpErr := journal.Create(j)
+		newJID, httpErr := journal.Create(j)
 
 		if httpErr != nil {
 			return httpErr
 		}
 
-		return c.JSON(http.StatusCreated, newJ)
+		return c.JSON(http.StatusCreated, *newJID)
 	})
 
-	g.GET("/:id", func(c echo.Context) error {
+	e.GET("/api/journals/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
 		j, err := journal.Get(id)
@@ -53,10 +51,10 @@ func AddRoutes(e *echo.Echo) {
 		return c.JSON(http.StatusOK, *j)
 	})
 
-	g.DELETE("/:id", func(c echo.Context) error {
+	e.DELETE("/api/journals/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
-		_, err := journal.Delete(id)
+		err := journal.Delete(id)
 		if err != nil {
 			return err
 		}
@@ -64,7 +62,7 @@ func AddRoutes(e *echo.Echo) {
 		return c.NoContent(http.StatusNoContent)
 	})
 
-	g.PUT("/:id", func(c echo.Context) error {
+	e.PUT("/api/journals/:id", func(c echo.Context) error {
 		e.Validator = &models.CreateOrPutJournalValidator{Validator: validator.New()}
 		id := c.Param("id")
 
