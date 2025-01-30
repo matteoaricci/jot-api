@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/api/journals"
 	"github.com/matteoaricci/jot-api/models/journal"
@@ -17,18 +16,81 @@ func TestJournalEndpoints(t *testing.T) {
 	t.Run("Get all journals", func(t *testing.T) {
 		e := Server
 
-		req := httptest.NewRequest(http.MethodGet, "/api/journals", nil)
-		rec := httptest.NewRecorder()
-		e.ServeHTTP(rec, req)
+		t.Run("No Params", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/journals", nil)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
 
-		assert.Equal(t, http.StatusOK, rec.Code)
-		fmt.Println(rec.Body.String())
-		assert.JSONEq(t,
-			// language=JSON
-			`[{"title":"Psychopomp","description":"Japanese Breakfast's first album","id":"1"},
-					   {"title":"Soft Sounds from Another Planet","description":"Absolute banger followup","id":"2"},
-					   {"title":"Jubilee","description":"Here Michelle Zauner asks: what if joy was as complex as grief","id":"3"}]`,
-			rec.Body.String())
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.JSONEq(t,
+				// language=JSON
+				`{
+			  "total_records" : 3,
+			  "journals" : [ {
+				"title" : "Psychopomp",
+				"description" : "Japanese Breakfast's first album",
+				"id" : "1",
+				"completed" : "true"
+			  }, {
+				"title" : "Soft Sounds from Another Planet",
+				"description" : "Absolute banger followup",
+				"id" : "2",
+				"completed" : "false"
+			  }, {
+				"title" : "Jubilee",
+				"description" : "Here Michelle Zauner asks: what if joy was as complex as grief",
+				"id" : "3",
+				"completed" : "unknown"
+			  } ],
+			  "page" : 1,
+			  "size" : 10
+			}`,
+				rec.Body.String())
+		})
+
+		t.Run("With Pagination Params", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/journals?size=1&page=2", nil)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.JSONEq(t,
+				// language=JSON
+				`{
+			  "total_records" : 1,
+			  "journals" : [{
+				"title" : "Soft Sounds from Another Planet",
+				"description" : "Absolute banger followup",
+				"id" : "2",
+				"completed" : "false"
+			  }],
+			  "page" : 2,
+			  "size" : 1
+			}`,
+				rec.Body.String())
+		})
+
+		t.Run("With Completed Params", func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/journals?completed=unknown", nil)
+			rec := httptest.NewRecorder()
+			e.ServeHTTP(rec, req)
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.JSONEq(t,
+				// language=JSON
+				`{
+			  "total_records" : 1,
+			  "journals" : [{
+				"title" : "Jubilee",
+				"description" : "Here Michelle Zauner asks: what if joy was as complex as grief",
+				"id" : "3",
+				"completed" : "unknown"
+			  } ],
+			  "page" : 1,
+			  "size" : 10
+			}`,
+				rec.Body.String())
+		})
 	})
 	t.Run("Get journal by id", func(t *testing.T) {
 		e := Server
@@ -41,7 +103,7 @@ func TestJournalEndpoints(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code)
 			assert.JSONEq(t,
 				// language=JSON
-				`{"title":"Psychopomp","description":"Japanese Breakfast's first album","id":"1"}`,
+				`{"title":"Psychopomp","description":"Japanese Breakfast's first album","id":"1","completed":"true"}`,
 				rec.Body.String())
 		})
 
@@ -63,6 +125,7 @@ func TestJournalEndpoints(t *testing.T) {
 			dummyData := models.CreateOrPutJournalVM{
 				Title:       "dummy title",
 				Description: "dummy desc",
+				Completed:   "true",
 			}
 
 			err := json.NewEncoder(&b).Encode(dummyData)
@@ -116,6 +179,7 @@ func TestJournalEndpoints(t *testing.T) {
 			dummyData := models.CreateOrPutJournalVM{
 				Title:       "dummy title",
 				Description: "dummy desc",
+				Completed:   "false",
 			}
 
 			err := json.NewEncoder(&b).Encode(dummyData)
@@ -132,7 +196,7 @@ func TestJournalEndpoints(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code)
 			assert.JSONEq(t,
 				// language=JSON
-				`{"title":"dummy title","description":"dummy desc", "id":  "2"}`,
+				`{"title":"dummy title","description":"dummy desc", "id":  "2","completed":"false"}`,
 				rec.Body.String())
 		})
 

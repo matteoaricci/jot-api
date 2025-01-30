@@ -32,8 +32,17 @@ type JournalVM struct {
 	Completed   IsCompleted `json:"completed" validate:"omitempty"`
 }
 
+type PageOfJournalVMs struct {
+	TotalRecords int         `json:"total_records"`
+	Journals     []JournalVM `json:"journals"`
+	Page         int         `json:"page"`
+	Size         int         `json:"size"`
+}
+
 type JournalQueryParams struct {
 	Completed IsCompleted `query:"completed" validate:"omitempty,oneof=true false unknown"`
+	Size      int         `query:"size" validate:"omitempty,min=0"`
+	Page      int         `query:"page" validate:"omitempty,min=0"`
 }
 
 type IsCompleted string

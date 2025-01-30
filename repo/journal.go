@@ -30,7 +30,7 @@ func GetAllJournals(params models.JournalQueryParams) ([]Journal, error) {
 
 	var journal []Journal
 
-	row := db.Where(m).Find(&journal)
+	row := db.Scopes(paginate(params)).Where(m).Find(&journal)
 	if row.Error != nil {
 		return nil, row.Error
 	}
@@ -88,4 +88,22 @@ func DeleteJournal(id string) error {
 	}
 
 	return nil
+}
+
+func paginate(params models.JournalQueryParams) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		page := params.Page
+		if page <= 0 {
+			page = 1
+		}
+
+		pageSize := params.Size
+		switch {
+		case pageSize < 1:
+			pageSize = 10
+		}
+
+		offset := (page - 1) * pageSize
+		return db.Offset(offset).Limit(pageSize)
+	}
 }

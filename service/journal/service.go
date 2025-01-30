@@ -19,7 +19,7 @@ func Delete(id string) *echo.HTTPError {
 	return nil
 }
 
-func All(params models.JournalQueryParams) ([]models.JournalVM, *echo.HTTPError) {
+func All(params models.JournalQueryParams) (*models.PageOfJournalVMs, *echo.HTTPError) {
 	jRepos, err := repo.GetAllJournals(params)
 	if err != nil {
 		if err.Error() == "record not found" {
@@ -28,9 +28,9 @@ func All(params models.JournalQueryParams) ([]models.JournalVM, *echo.HTTPError)
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	jVMs := MapRepoSliceToVMSlice(jRepos)
+	pageOfVMs := RepoToPageOfVMs(jRepos, params)
 
-	return jVMs, nil
+	return &pageOfVMs, nil
 }
 
 func Get(id string) (*models.JournalVM, *echo.HTTPError) {
