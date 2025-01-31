@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/journal"
 	"github.com/matteoaricci/jot-api/repo"
+	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 )
@@ -36,7 +37,7 @@ func All(params models.JournalQueryParams) (*models.PageOfJournalVMs, *echo.HTTP
 func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 	j, err := repo.GetJournalByID(id)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -50,7 +51,7 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 func Create(newJournal models.CreateOrPutJournalVM) (*string, *echo.HTTPError) {
 	j, err := repo.CreateJournal(newJournal.Title, newJournal.Description, newJournal.Completed)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -72,7 +73,7 @@ func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *ec
 
 	jRepo, err := repo.UpdateJournal(id64, journal.Title, journal.Description, journal.Completed)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err.Error() == gorm.ErrRecordNotFound.Error() {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())

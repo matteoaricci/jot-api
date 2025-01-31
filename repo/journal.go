@@ -1,7 +1,6 @@
 package repo
 
 import (
-	models "github.com/matteoaricci/jot-api/models/journal"
 	"gorm.io/gorm"
 	"time"
 )
@@ -13,7 +12,6 @@ type Journal struct {
 	DeletedAt   gorm.DeletedAt     `gorm:"index" json:"deleted_at"`
 	Title       string             `gorm:"type:text" `
 	Description string             `gorm:"type:text"`
-	Completed   models.IsCompleted `gorm:"type:is_completed, default:'unknown'" json:"completed"`
 }
 
 var db *gorm.DB
@@ -22,15 +20,8 @@ func InitJournalRepo(dB *gorm.DB) {
 	db = dB
 }
 
-func GetAllJournals(params models.JournalQueryParams) ([]Journal, error) {
-	m := make(map[string]any)
-	if params.Completed != "" {
-		m["completed"] = params.Completed
-	}
-
 	var journal []Journal
 
-	row := db.Scopes(paginate(params)).Where(m).Find(&journal)
 	if row.Error != nil {
 		return nil, row.Error
 	}
@@ -49,8 +40,6 @@ func GetJournalByID(id string) (*Journal, error) {
 	return &journal, nil
 }
 
-func CreateJournal(title string, description string, completed models.IsCompleted) (*Journal, error) {
-	journal := Journal{Title: title, Description: description, Completed: completed}
 	err := db.Create(&journal).Error
 
 	if err != nil {
@@ -60,12 +49,10 @@ func CreateJournal(title string, description string, completed models.IsComplete
 	return &journal, nil
 }
 
-func UpdateJournal(id uint64, title string, description string, completed models.IsCompleted) (*Journal, error) {
 	row := db.First(&Journal{}, id)
 	if row.Error != nil {
 		return nil, row.Error
 	}
-	journal := Journal{ID: id, Title: title, Description: description, Completed: completed}
 
 	if err := db.Save(&journal).Error; err != nil {
 		return nil, err
@@ -88,22 +75,4 @@ func DeleteJournal(id string) error {
 	}
 
 	return nil
-}
-
-func paginate(params models.JournalQueryParams) func(db *gorm.DB) *gorm.DB {
-	return func(db *gorm.DB) *gorm.DB {
-		page := params.Page
-		if page <= 0 {
-			page = 1
-		}
-
-		pageSize := params.Size
-		switch {
-		case pageSize < 1:
-			pageSize = 10
-		}
-
-		offset := (page - 1) * pageSize
-		return db.Offset(offset).Limit(pageSize)
-	}
 }
