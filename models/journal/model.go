@@ -29,11 +29,11 @@ type JournalVM struct {
 	Title       string      `json:"title"`
 	Description string      `json:"description"`
 	ID          string      `json:"id"`
-	Completed   IsCompleted `json:"completed" validate:"omitempty"`
+	Completed   IsCompleted `json:"completed"`
 }
 
 type PageOfJournalVMs struct {
-	TotalRecords int         `json:"total_records"`
+	TotalRecords int         `json:"totalRecords"`
 	Journals     []JournalVM `json:"journals"`
 	Page         int         `json:"page"`
 	Size         int         `json:"size"`

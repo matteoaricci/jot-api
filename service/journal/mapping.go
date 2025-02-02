@@ -26,26 +26,12 @@ func MapRepoSliceToVMSlice(js []repo.Journal) []models.JournalVM {
 
 func RepoToPageOfVMs(js []repo.Journal, params models.JournalQueryParams) models.PageOfJournalVMs {
 	total := len(js)
-	var page int
-	var size int
-
-	if params.Page <= 0 {
-		page = 1
-	} else {
-		page = params.Page
-	}
-
-	if params.Size <= 0 {
-		size = 10
-	} else {
-		size = params.Size
-	}
 
 	pageOfVMs := models.PageOfJournalVMs{
 		TotalRecords: total,
 		Journals:     MapRepoSliceToVMSlice(js),
-		Page:         page,
-		Size:         size,
+		Page:         params.Page,
+		Size:         params.Size,
 	}
 
 	return pageOfVMs

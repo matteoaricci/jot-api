@@ -12,7 +12,7 @@ func AddRoutes(e *echo.Echo) {
 		var params models.JournalQueryParams
 		bindErr := c.Bind(&params)
 		if bindErr != nil {
-			return c.String(http.StatusBadRequest, "bad request")
+			return c.JSON(http.StatusBadRequest, bindErr.Error())
 		}
 		if err := models.Validate(&params); err != nil {
 			return c.JSON(http.StatusBadRequest, err)
