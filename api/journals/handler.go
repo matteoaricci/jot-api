@@ -14,8 +14,12 @@ func AddRoutes(e *echo.Echo) {
 		if bindErr != nil {
 			return c.JSON(http.StatusBadRequest, bindErr.Error())
 		}
-		if err := models.Validate(&params); err != nil {
-			return c.JSON(http.StatusBadRequest, err)
+
+		if params.Size == 0 {
+			params.Size = 10
+		}
+		if params.Page == 0 {
+			params.Page = 1
 		}
 
 		j, err := journal.All(params)

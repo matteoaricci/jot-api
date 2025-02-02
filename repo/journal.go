@@ -92,10 +92,6 @@ func DeleteJournal(id string) error {
 
 func paginate(params models.JournalQueryParams) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		page := params.Page
-		if page <= 0 {
-			page = 1
-		}
 
 		pageSize := params.Size
 		switch {
@@ -103,7 +99,7 @@ func paginate(params models.JournalQueryParams) func(db *gorm.DB) *gorm.DB {
 			pageSize = 10
 		}
 
-		offset := (page - 1) * pageSize
+		offset := (params.Page - 1) * pageSize
 		return db.Offset(offset).Limit(pageSize)
 	}
 }

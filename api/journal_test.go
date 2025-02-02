@@ -25,7 +25,7 @@ func TestJournalEndpoints(t *testing.T) {
 			assert.JSONEq(t,
 				// language=JSON
 				`{
-			  "total_records" : 3,
+			  "totalRecords" : 3,
 			  "journals" : [ {
 				"title" : "Psychopomp",
 				"description" : "Japanese Breakfast's first album",
@@ -57,7 +57,7 @@ func TestJournalEndpoints(t *testing.T) {
 			assert.JSONEq(t,
 				// language=JSON
 				`{
-			  "total_records" : 1,
+			  "totalRecords" : 1,
 			  "journals" : [{
 				"title" : "Soft Sounds from Another Planet",
 				"description" : "Absolute banger followup",
@@ -79,7 +79,7 @@ func TestJournalEndpoints(t *testing.T) {
 			assert.JSONEq(t,
 				// language=JSON
 				`{
-			  "total_records" : 1,
+			  "totalRecords" : 1,
 			  "journals" : [{
 				"title" : "Jubilee",
 				"description" : "Here Michelle Zauner asks: what if joy was as complex as grief",
