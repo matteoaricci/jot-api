@@ -13,4 +13,5 @@ CREATE TABLE IF NOT EXISTS journal
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';
+DROP TABLE journal;
 -- +goose StatementEnd
