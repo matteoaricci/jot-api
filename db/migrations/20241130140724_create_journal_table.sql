@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TABLE journal
+CREATE TABLE IF NOT EXISTS journal
 (
     id          SERIAL PRIMARY KEY,
     created_at  TIMESTAMP,
@@ -13,5 +13,5 @@ CREATE TABLE journal
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';
-DROP TABLE journal
+DROP TABLE journal;
 -- +goose StatementEnd

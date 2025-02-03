@@ -1,6 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
-ALTER TABLE journal ADD COLUMN deleted_at TIMESTAMP
+ALTER TABLE journal ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP
 -- +goose StatementEnd
 
 -- +goose Down

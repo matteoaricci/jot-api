@@ -11,6 +11,7 @@ func MapRepoToVM(j repo.Journal) models.JournalVM {
 		Title:       j.Title,
 		Description: j.Description,
 		ID:          strconv.FormatUint(j.ID, 10),
+		Completed:   j.Completed,
 	}
 }
 
@@ -21,4 +22,17 @@ func MapRepoSliceToVMSlice(js []repo.Journal) []models.JournalVM {
 	}
 
 	return jVMs
+}
+
+func RepoToPageOfVMs(js []repo.Journal, params models.JournalQueryParams) models.PageOfJournalVMs {
+	total := len(js)
+
+	pageOfVMs := models.PageOfJournalVMs{
+		TotalRecords: total,
+		Journals:     MapRepoSliceToVMSlice(js),
+		Page:         params.Page,
+		Size:         params.Size,
+	}
+
+	return pageOfVMs
 }
