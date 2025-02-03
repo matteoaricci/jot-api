@@ -1,0 +1,171 @@
+definitions:
+  echo.HTTPError:
+    properties:
+      message: {}
+    type: object
+  models.CreateOrPutJournalVM:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+    required:
+    - description
+    - title
+    type: object
+  models.JournalVM:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /journals:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all journals
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.JournalVM'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Get all journals
+      tags:
+      - journals
+    post:
+      consumes:
+      - application/json
+      description: Create a new journal entry
+      parameters:
+      - description: Journal object
+        in: body
+        name: journal
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateOrPutJournalVM'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Journal ID
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Create a journal
+      tags:
+      - journals
+  /journals/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a journal by ID
+      parameters:
+      - description: Journal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Delete a journal
+      tags:
+      - journals
+    get:
+      consumes:
+      - application/json
+      description: Get a journal by ID
+      parameters:
+      - description: Journal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JournalVM'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Get a journal
+      tags:
+      - journals
+    put:
+      consumes:
+      - application/json
+      description: Update a journal by ID
+      parameters:
+      - description: Journal ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Journal object
+        in: body
+        name: journal
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateOrPutJournalVM'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.JournalVM'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/echo.HTTPError'
+      summary: Update a journal
+      tags:
+      - journals
+swagger: "2.0"
