@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/matteoaricci/jot-api/api"
 	"github.com/matteoaricci/jot-api/db"
 	"log"
@@ -9,6 +11,8 @@ import (
 )
 
 func main() {
+	runLocally := flag.Bool("local", false, "Run in local mode")
+
 	e := api.ConstructServer()
 
 	host := os.Getenv("DB_HOST")
@@ -50,8 +54,12 @@ func main() {
 
 	fmt.Println("Listening on port: ", serverPort)
 
-	err := e.Start(":" + serverPort)
-	if err != nil {
-		log.Fatal(err)
+	if *runLocally {
+		err := e.Start(":" + serverPort)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		lambda.Start(LambdaEchoProxy(e))
 	}
 }
