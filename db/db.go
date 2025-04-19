@@ -23,6 +23,8 @@ func InitDB(host string, port string, user string, password string, dbName strin
 		},
 	})
 
+	log.Println("we connected?")
+
 	if err != nil {
 		log.Fatal(err)
 	}

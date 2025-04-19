@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	runLocally := flag.Bool("local", false, "Run in local mode")
+	runLocally := flag.Bool("local", true, "Run in local mode")
 
 	e := api.ConstructServer()
 
