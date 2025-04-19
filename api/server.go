@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/api/journals"
+	"github.com/matteoaricci/jot-api/config"
 	"github.com/matteoaricci/jot-api/middleware"
 	"net/http"
 )
@@ -19,6 +20,18 @@ func AddRouteHandlers(e *echo.Echo) {
 			Status string `json:"status"`
 		}{
 			Status: "OK",
+		}
+
+		return c.JSON(http.StatusOK, res)
+	})
+
+	e.GET("/api/version", func(c echo.Context) error {
+		res := struct {
+			Version   string `json:"version"`
+			GitCommit string `json:"gitCommit"`
+		}{
+			Version:   config.Version,
+			GitCommit: config.CommitHash,
 		}
 
 		return c.JSON(http.StatusOK, res)
