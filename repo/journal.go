@@ -14,6 +14,7 @@ type Journal struct {
 	Title       string             `gorm:"type:text" `
 	Description string             `gorm:"type:text"`
 	Completed   models.IsCompleted `gorm:"type:is_completed, default:'unknown'" json:"completed"`
+	UserID      string             `gorm:"type:text" json:"userId"`
 }
 
 var db *gorm.DB
@@ -88,6 +89,21 @@ func DeleteJournal(id string) error {
 	}
 
 	return nil
+}
+
+func GetJournalsByUserID(id string) ([]Journal, error) {
+	m := make(map[string]any)
+
+	m["user_id"] = id
+
+	var journal []Journal
+
+	row := db.Where(m).Find(&journal)
+	if row.Error != nil {
+		return nil, row.Error
+	}
+
+	return journal, nil
 }
 
 func paginate(params models.JournalQueryParams) func(db *gorm.DB) *gorm.DB {

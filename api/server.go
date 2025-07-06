@@ -3,12 +3,14 @@ package api
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/api/journals"
+	"github.com/matteoaricci/jot-api/api/users"
 	"github.com/matteoaricci/jot-api/middleware"
 	"net/http"
 )
 
 func AddRouteHandlers(e *echo.Echo) {
 	journals.AddRoutes(e)
+	users.AddRoutes(e)
 
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)

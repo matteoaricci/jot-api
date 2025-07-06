@@ -46,3 +46,12 @@ func CreateUser(firstName string, lastName string, email string, password string
 
 	return nil
 }
+
+func DeleteUser(id string) error {
+	row := db.Delete(&Usr{}, id)
+	if row.Error != nil {
+		return row.Error
+	}
+
+	return nil
+}

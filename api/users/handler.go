@@ -10,6 +10,8 @@ import (
 func AddRoutes(e *echo.Echo) {
 	e.POST("/api/authenticate", authenticate)
 	e.POST("api/sign-up", signUp)
+	e.GET("/api/users/:id/journals", getJournalsByUserID)
+	e.DELETE("api/users/:id", deleteUser)
 }
 
 func signUp(c echo.Context) error {
@@ -19,6 +21,12 @@ func signUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, bindErr.Error())
 	}
 
+	err := user.SignUpUser(params.FirstName, params.LastName, params.Email, params.Password)
+	if err != nil {
+		return err
+	}
+
+	return c.NoContent(http.StatusOK)
 }
 
 func authenticate(c echo.Context) error {
@@ -28,10 +36,34 @@ func authenticate(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, bindErr.Error())
 	}
 
-	err := user.AuthenticateUser(params.Email, params.Password)
+	t, err := user.AuthenticateUser(params.Email, params.Password)
 	if err != nil {
 		return c.JSON(err.Code, err.Error())
 	}
 
-	return c.NoContent(http.StatusOK)
+	return c.JSON(http.StatusOK, echo.Map{
+		"token": t,
+	})
+}
+
+func getJournalsByUserID(c echo.Context) error {
+	id := c.Param("id")
+
+	j, err := user.GetJournals(id)
+	if err != nil {
+		return c.JSON(err.Code, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, j)
+}
+
+func deleteUser(c echo.Context) error {
+	id := c.Param("id")
+
+	err := user.DeleteUser(id)
+	if err != nil {
+		return err
+	}
+
+	return c.NoContent(200)
 }
