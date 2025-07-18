@@ -56,8 +56,8 @@ func SignUpUser(firstName string, lastName string, email string, password string
 	return nil
 }
 
-func GetJournals(id string) ([]models.JournalVM, *echo.HTTPError) {
-	js, err := repo.GetJournalsByUserID(id)
+func GetJournals(id string, params models.JournalQueryParams) ([]models.JournalVM, *echo.HTTPError) {
+	js, err := repo.GetJournalsByUserID(id, params)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

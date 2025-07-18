@@ -91,14 +91,14 @@ func DeleteJournal(id string) error {
 	return nil
 }
 
-func GetJournalsByUserID(id string) ([]Journal, error) {
+func GetJournalsByUserID(id string, params models.JournalQueryParams) ([]Journal, error) {
 	m := make(map[string]any)
 
 	m["user_id"] = id
 
 	var journal []Journal
 
-	row := db.Where(m).Find(&journal)
+	row := db.Scopes(paginate(params)).Where(m).Find(&journal)
 	if row.Error != nil {
 		return nil, row.Error
 	}

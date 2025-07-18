@@ -2,6 +2,7 @@ package users
 
 import (
 	"github.com/labstack/echo/v4"
+	jModels "github.com/matteoaricci/jot-api/models/journal"
 	models "github.com/matteoaricci/jot-api/models/user"
 	"github.com/matteoaricci/jot-api/service/user"
 	"net/http"
@@ -49,7 +50,20 @@ func authenticate(c echo.Context) error {
 func getJournalsByUserID(c echo.Context) error {
 	id := c.Param("id")
 
-	j, err := user.GetJournals(id)
+	var params jModels.JournalQueryParams
+	bindErr := c.Bind(&params)
+	if bindErr != nil {
+		return c.JSON(http.StatusBadRequest, bindErr.Error())
+	}
+
+	if params.Size == 0 {
+		params.Size = 10
+	}
+	if params.Page == 0 {
+		params.Page = 1
+	}
+
+	j, err := user.GetJournals(id, params)
 	if err != nil {
 		return c.JSON(err.Code, err.Error())
 	}
