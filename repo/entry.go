@@ -13,6 +13,8 @@ type Entry struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 	Content   string         `gorm:"type:text" json:"content"`
 	JournalID string         `gorm:"type:text" json:"journal_id"`
+	CreatedBy string         `gorm:"type:text" json:"created_by"`
+	UpdatedBy string         `gorm:"type:text" json:"updated_by"`
 }
 
 // CreateEntry inserts a new entry for the given journal

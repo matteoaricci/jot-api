@@ -15,6 +15,7 @@ import (
 
 type jwtCustomClaims struct {
 	Name string `json:"name"`
+	Role string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -28,8 +29,9 @@ func AuthenticateUser(email string, password string) (*string, *echo.HTTPError) 
 	}
 
 	claims := &jwtCustomClaims{
-		fmt.Sprintf("%s %s", u.FirstName, u.LastName),
-		jwt.RegisteredClaims{
+		Name: fmt.Sprintf("%s %s", u.FirstName, u.LastName),
+		Role: u.Role,
+		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
 		},
 	}
@@ -44,8 +46,12 @@ func AuthenticateUser(email string, password string) (*string, *echo.HTTPError) 
 	return &t, nil
 }
 
-func SignUpUser(firstName string, lastName string, email string, password string) *echo.HTTPError {
-	err := repo.CreateUser(firstName, lastName, email, password)
+// SignUpUser creates a new user with the specified role (defaulting to 'user').
+func SignUpUser(firstName string, lastName string, email string, password string, role string) *echo.HTTPError {
+	if role == "" {
+		role = "user"
+	}
+	err := repo.CreateUser(firstName, lastName, email, password, role)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound)

@@ -22,7 +22,7 @@ func signUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, bindErr.Error())
 	}
 
-	err := user.SignUpUser(params.FirstName, params.LastName, params.Email, params.Password)
+	err := user.SignUpUser(params.FirstName, params.LastName, params.Email, params.Password, params.Role)
 	if err != nil {
 		return err
 	}

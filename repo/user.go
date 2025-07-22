@@ -14,6 +14,7 @@ type Usr struct {
 	Password  string         `gorm:"password" json:"password"`
 	FirstName string         `gorm:"first_name" json:"firstName"`
 	LastName  string         `gorm:"last_name" json:"lastName"`
+	Role      string         `gorm:"type:text;default:'user'" json:"role"`
 }
 
 func FindUser(email string, password string) (*Usr, error) {
@@ -31,12 +32,13 @@ func FindUser(email string, password string) (*Usr, error) {
 	return &u, nil
 }
 
-func CreateUser(firstName string, lastName string, email string, password string) error {
+func CreateUser(firstName string, lastName string, email string, password string, role string) error {
 	u := Usr{
 		Email:     email,
 		Password:  password,
 		FirstName: firstName,
 		LastName:  lastName,
+		Role:      role,
 	}
 
 	row := db.Create(&u)

@@ -11,6 +11,8 @@ type Journal struct {
 	CreatedAt   time.Time          `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt   time.Time          `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 	DeletedAt   gorm.DeletedAt     `gorm:"index" json:"deleted_at"`
+	CreatedBy   string             `gorm:"type:text" json:"created_by"`
+	UpdatedBy   string             `gorm:"type:text" json:"updated_by"`
 	Title       string             `gorm:"type:text" `
 	Description string             `gorm:"type:text"`
 	Completed   models.IsCompleted `gorm:"type:is_completed, default:'unknown'" json:"completed"`

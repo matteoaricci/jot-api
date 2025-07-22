@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS usr
     id          SERIAL PRIMARY KEY,
     created_at  TIMESTAMP,
     updated_at  TIMESTAMP,
+    deleted_at  TIMESTAMP,
     email       VARCHAR,
     password    VARCHAR
 )

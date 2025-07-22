@@ -10,4 +10,5 @@ type SignUpUserVM struct {
 	Password  string `json:"password" validate:"required"`
 	FirstName string `json:"firstName" validate:"required"`
 	LastName  string `json:"lastName" validate:"required"`
+	Role      string `json:"role,omitempty"`
 }
