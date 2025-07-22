@@ -23,6 +23,7 @@ func TestUserEndpoints(t *testing.T) {
 			LastName:  "Doe",
 			Email:     "jane@example.com",
 			Password:  "secret",
+			Role:      "admin",
 		}
 		if err := json.NewEncoder(&b).Encode(dummy); err != nil {
 			t.Fatal(err)

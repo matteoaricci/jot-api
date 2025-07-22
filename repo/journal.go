@@ -16,7 +16,8 @@ type Journal struct {
 	Title       string             `gorm:"type:text" `
 	Description string             `gorm:"type:text"`
 	Completed   models.IsCompleted `gorm:"type:is_completed, default:'unknown'" json:"completed"`
-	UserID      string             `gorm:"type:text" json:"userId"`
+	// UserID links this journal to its owner (nullable)
+	UserID *uint64 `gorm:"column:user_id" json:"userId"`
 }
 
 var db *gorm.DB

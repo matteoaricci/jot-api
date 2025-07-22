@@ -7,7 +7,9 @@ CREATE TABLE IF NOT EXISTS usr
     updated_at  TIMESTAMP,
     deleted_at  TIMESTAMP,
     email       VARCHAR,
-    password    VARCHAR
+    password    VARCHAR,
+    first_name  VARCHAR,
+    last_name   VARCHAR
 )
 -- +goose StatementEnd
 

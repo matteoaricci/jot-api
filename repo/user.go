@@ -24,7 +24,7 @@ func FindUser(email string, password string) (*Usr, error) {
 
 	var u Usr
 
-	row := db.Where(m).Find(&u)
+	row := db.Where(m).First(&u)
 	if row.Error != nil {
 		return nil, row.Error
 	}
