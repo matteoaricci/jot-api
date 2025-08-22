@@ -45,7 +45,7 @@ func TestEntryEndpoints(t *testing.T) {
 		assert.Equal(t, "\"1\"\n", rec.Body.String())
 	})
 
-	t.Run("Get entries (after create)", func(t *testing.T) {
+	t.Run("Get entries after create", func(t *testing.T) {
 		e := Server
 		req := httptest.NewRequest(http.MethodGet, "/api/journals/1/entries", nil)
 		rec := httptest.NewRecorder()

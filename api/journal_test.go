@@ -153,7 +153,6 @@ func TestJournalEndpoints(t *testing.T) {
 			}
 
 			err := json.NewEncoder(&b).Encode(dummyData)
-
 			if err != nil {
 				t.Fatal(err)
 			}
