@@ -18,9 +18,12 @@ func TestEntryEndpoints(t *testing.T) {
 	// ensure the entry routes are registered
 	_ = entryAPI.AddRoutes
 
+	authToken := GetAuthToken(t)
+
 	t.Run("Get entries (none exist)", func(t *testing.T) {
 		e := Server
 		req := httptest.NewRequest(http.MethodGet, "/api/journals/1/entries", nil)
+		req.AddCookie(authToken)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -38,6 +41,7 @@ func TestEntryEndpoints(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodPost, "/api/journals/1/entries", &b)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.AddCookie(authToken)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 
@@ -48,6 +52,7 @@ func TestEntryEndpoints(t *testing.T) {
 	t.Run("Get entries after create", func(t *testing.T) {
 		e := Server
 		req := httptest.NewRequest(http.MethodGet, "/api/journals/1/entries", nil)
+		req.AddCookie(authToken)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
@@ -75,6 +80,7 @@ func TestEntryEndpoints(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodPost, "/api/journals/1/entries", &b)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req.AddCookie(authToken)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)

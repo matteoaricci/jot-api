@@ -43,7 +43,6 @@ func AddRoutes(e *echo.Echo) {
 		}
 
 		newJID, httpErr := journal.Create(j)
-
 		if httpErr != nil {
 			return httpErr
 		}
