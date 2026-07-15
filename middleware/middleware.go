@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func AddMiddleware(e *echo.Echo) {
+func AddMiddleware(e *echo.Echo, jwtSecret string) {
 	//e.Use(middleware.CSRF())
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -30,6 +30,8 @@ func AddMiddleware(e *echo.Echo) {
 		StackSize: 1 << 10,
 		LogLevel:  log.ERROR,
 	}))
+
+	e.Use(AuthMiddleware(jwtSecret))
 
 	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {

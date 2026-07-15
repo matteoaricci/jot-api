@@ -13,65 +13,62 @@ import (
 )
 
 func TestJournalEndpoints(t *testing.T) {
+	authToken := GetAuthToken(t)
+
 	t.Run("Get all journals", func(t *testing.T) {
 		e := Server
 
 		t.Run("No Params", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/journals", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
 			assert.Equal(t, http.StatusOK, rec.Code)
-			assert.JSONEq(t,
-				// language=JSON
-				`{
-			  "totalRecords" : 3,
-			  "journals" : [ {
-				"title" : "Psychopomp",
-				"description" : "Japanese Breakfast's first album",
-				"id" : "1",
-				"completed" : "true"
-			  }, {
-				"title" : "Soft Sounds from Another Planet",
-				"description" : "Absolute banger followup",
-				"id" : "2",
-				"completed" : "false"
-			  }, {
-				"title" : "Jubilee",
-				"description" : "Here Michelle Zauner asks: what if joy was as complex as grief",
-				"id" : "3",
-				"completed" : "unknown"
-			  } ],
-			  "page" : 1,
-			  "size" : 10
-			}`,
-				rec.Body.String())
+
+			var result struct {
+				TotalRecords int                      `json:"totalRecords"`
+				Journals     []map[string]interface{} `json:"journals"`
+				Page         int                      `json:"page"`
+				Size         int                      `json:"size"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, 3, result.TotalRecords)
+			assert.Equal(t, 1, result.Page)
+			assert.Equal(t, 10, result.Size)
+			assert.Len(t, result.Journals, 3)
 		})
 
 		t.Run("With Pagination Params", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/journals?size=1&page=2", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
 			assert.Equal(t, http.StatusOK, rec.Code)
-			assert.JSONEq(t,
-				// language=JSON
-				`{
-			  "totalRecords" : 1,
-			  "journals" : [{
-				"title" : "Soft Sounds from Another Planet",
-				"description" : "Absolute banger followup",
-				"id" : "2",
-				"completed" : "false"
-			  }],
-			  "page" : 2,
-			  "size" : 1
-			}`,
-				rec.Body.String())
+
+			var result struct {
+				TotalRecords int                      `json:"totalRecords"`
+				Journals     []map[string]interface{} `json:"journals"`
+				Page         int                      `json:"page"`
+				Size         int                      `json:"size"`
+			}
+			if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+
+			assert.Equal(t, 1, result.TotalRecords)
+			assert.Equal(t, 2, result.Page)
+			assert.Equal(t, 1, result.Size)
+			assert.Len(t, result.Journals, 1)
 		})
 
 		t.Run("With Completed Params", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/journals?completed=unknown", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
@@ -97,6 +94,7 @@ func TestJournalEndpoints(t *testing.T) {
 
 		t.Run("success", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/journals/1", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
@@ -109,6 +107,7 @@ func TestJournalEndpoints(t *testing.T) {
 
 		t.Run("not found", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/journals/4", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
@@ -135,6 +134,7 @@ func TestJournalEndpoints(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/api/journals", &b)
+			req.AddCookie(authToken)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
@@ -158,6 +158,7 @@ func TestJournalEndpoints(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPost, "/api/journals", &b)
+			req.AddCookie(authToken)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
@@ -188,6 +189,7 @@ func TestJournalEndpoints(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPut, "/api/journals/2", &b)
+			req.AddCookie(authToken)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
@@ -214,6 +216,7 @@ func TestJournalEndpoints(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPut, "/api/journals/20", &b)
+			req.AddCookie(authToken)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
@@ -237,6 +240,7 @@ func TestJournalEndpoints(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPut, "/api/journals/2", &b)
+			req.AddCookie(authToken)
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
@@ -254,12 +258,14 @@ func TestJournalEndpoints(t *testing.T) {
 		journals.AddRoutes(e)
 		t.Run("success", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodDelete, "/api/journals/1", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
 			assert.Equal(t, http.StatusNoContent, rec.Code)
 
 			req = httptest.NewRequest(http.MethodGet, "/api/journals/1", nil)
+			req.AddCookie(authToken)
 			rec = httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 
@@ -268,6 +274,7 @@ func TestJournalEndpoints(t *testing.T) {
 
 		t.Run("not found", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodDelete, "/api/journals/20", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 

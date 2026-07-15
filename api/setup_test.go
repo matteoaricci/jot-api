@@ -22,6 +22,8 @@ var Server *echo.Echo
 
 var TestDB *gorm.DB
 
+var TestJWTSecret = "test-secret-key"
+
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 
@@ -100,7 +102,7 @@ func TestMain(m *testing.M) {
 		return
 	}
 
-	Server = ConstructServer()
+	Server = ConstructServer(TestJWTSecret)
 
 	TestDB = gormDB
 

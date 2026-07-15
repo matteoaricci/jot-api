@@ -28,7 +28,7 @@ func TestUserEndpoints(t *testing.T) {
 		if err := json.NewEncoder(&b).Encode(dummy); err != nil {
 			t.Fatal(err)
 		}
-		req := httptest.NewRequest(http.MethodPost, "/api/sign-up", &b)
+		req := httptest.NewRequest(http.MethodPost, "/api/public/sign-up", &b)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
@@ -44,12 +44,21 @@ func TestUserEndpoints(t *testing.T) {
 		if err := json.NewEncoder(&b).Encode(dummy); err != nil {
 			t.Fatal(err)
 		}
-		req := httptest.NewRequest(http.MethodPost, "/api/authenticate", &b)
+		req := httptest.NewRequest(http.MethodPost, "/api/public/authenticate", &b)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)
-		assert.Contains(t, rec.Body.String(), "token")
+
+		cookies := rec.Result().Cookies()
+		var hasToken bool
+		for _, cookie := range cookies {
+			if cookie.Name == "token" {
+				hasToken = true
+				break
+			}
+		}
+		assert.True(t, hasToken, "should have token cookie")
 
 		// invalid credentials
 		dummy = userModels.AuthenticateUserVM{Email: "nope@example.com", Password: "bad"}
@@ -57,7 +66,7 @@ func TestUserEndpoints(t *testing.T) {
 		if err := json.NewEncoder(&b).Encode(dummy); err != nil {
 			t.Fatal(err)
 		}
-		req = httptest.NewRequest(http.MethodPost, "/api/authenticate", &b)
+		req = httptest.NewRequest(http.MethodPost, "/api/public/authenticate", &b)
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec = httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
@@ -65,8 +74,11 @@ func TestUserEndpoints(t *testing.T) {
 	})
 
 	t.Run("Get User Journals", func(t *testing.T) {
+		authToken := GetAuthToken(t)
+
 		t.Run("No Params", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 			assert.Equal(t, http.StatusOK, rec.Code)
@@ -75,6 +87,7 @@ func TestUserEndpoints(t *testing.T) {
 
 		t.Run("Invalid Params", func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals?size=foo", nil)
+			req.AddCookie(authToken)
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 			assert.Equal(t, http.StatusBadRequest, rec.Code)
@@ -82,7 +95,9 @@ func TestUserEndpoints(t *testing.T) {
 	})
 
 	t.Run("Delete user", func(t *testing.T) {
+		authToken := GetAuthToken(t)
 		req := httptest.NewRequest(http.MethodDelete, "/api/users/1", nil)
+		req.AddCookie(authToken)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusOK, rec.Code)

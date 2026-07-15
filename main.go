@@ -13,7 +13,12 @@ import (
 func main() {
 	runLocally := flag.Bool("local", true, "Run in local mode")
 
-	e := api.ConstructServer()
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET environment variable not set")
+	}
+
+	e := api.ConstructServer(jwtSecret)
 
 	host := os.Getenv("DB_HOST")
 	if host == "" {
