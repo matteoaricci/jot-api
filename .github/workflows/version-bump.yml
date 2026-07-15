@@ -183,8 +183,13 @@ jobs:
           [ -n "$FIXES" ] && CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes\n${FIXES}\n\n"
           [ -n "$OTHER" ] && CHANGELOG="${CHANGELOG}### 🔧 Other Changes\n${OTHER}\n\n"
 
+          cat > /tmp/release-notes.md << EOF
+          ## What's Changed
+
+          ${CHANGELOG}
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/$LATEST_TAG...$NEW_VERSION
+          EOF
+
           gh release create "$NEW_VERSION" \
             --title "Release $NEW_VERSION" \
-            --notes "## What's Changed
-
-${CHANGELOG}**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LATEST_TAG...$NEW_VERSION"
+            --notes-file /tmp/release-notes.md
