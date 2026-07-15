@@ -1,0 +1,190 @@
+name: Version Bump
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - auto
+          - major
+          - minor
+          - patch
+        default: 'auto'
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Check if should skip release
+        id: should_skip
+        run: |
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+
+          # Get commits since last tag
+          if [ "$LATEST_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --pretty=format:"%s" HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%s" $LATEST_TAG..HEAD)
+          fi
+
+          echo "Commits since $LATEST_TAG:"
+          echo "$COMMITS"
+
+          # Check for skip markers
+          if echo "$COMMITS" | grep -qiE "\[skip release\]|\[no release\]|\[release skip\]"; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "⏭️  Found [skip release] in commits, skipping version bump"
+            exit 0
+          fi
+
+          # Check if only chore/docs commits (no features or fixes)
+          if ! echo "$COMMITS" | grep -qE "^(feat|fix|feature):"; then
+            if [ "${{ github.event_name }}" = "push" ]; then
+              echo "skip=true" >> $GITHUB_OUTPUT
+              echo "⏭️  Only chore/docs commits, skipping version bump"
+              exit 0
+            fi
+          fi
+
+          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "✅ Proceeding with version bump"
+
+      - name: Determine version bump
+        if: steps.should_skip.outputs.skip == 'false'
+        id: bump
+        run: |
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+          MANUAL_BUMP="${{ github.event.inputs.bump_type }}"
+
+          # If manual trigger with specific bump type, use that
+          if [ -n "$MANUAL_BUMP" ] && [ "$MANUAL_BUMP" != "auto" ]; then
+            echo "bump=$MANUAL_BUMP" >> $GITHUB_OUTPUT
+            echo "Manual bump type selected: $MANUAL_BUMP"
+            exit 0
+          fi
+
+          # Get commits since last tag
+          if [ "$LATEST_TAG" = "v0.0.0" ]; then
+            COMMITS=$(git log --pretty=format:"%s" HEAD)
+          else
+            COMMITS=$(git log --pretty=format:"%s" $LATEST_TAG..HEAD)
+          fi
+
+          # Determine bump type based on conventional commits
+          BUMP="patch"
+
+          if echo "$COMMITS" | grep -qE "^(feat|feature)!:|^[a-z]+\([a-z]+\)!:|BREAKING CHANGE:"; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -qE "^(feat|feature):"; then
+            BUMP="minor"
+          fi
+
+          echo "bump=$BUMP" >> $GITHUB_OUTPUT
+          echo "Determined bump type: $BUMP"
+
+      - name: Calculate new version
+        if: steps.should_skip.outputs.skip == 'false'
+        id: new_version
+        run: |
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+          BUMP="${{ steps.bump.outputs.bump }}"
+
+          # Remove 'v' prefix if present
+          VERSION=${LATEST_TAG#v}
+
+          # Split version into components
+          IFS='.' read -ra PARTS <<< "${VERSION%-*}"
+          MAJOR=${PARTS[0]:-0}
+          MINOR=${PARTS[1]:-0}
+          PATCH=${PARTS[2]:-0}
+
+          # Increment based on bump type
+          if [ "$BUMP" = "major" ]; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif [ "$BUMP" = "minor" ]; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Check if version already exists
+        if: steps.should_skip.outputs.skip == 'false'
+        id: check_tag
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          if git rev-parse "$NEW_VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️  Tag $NEW_VERSION already exists, skipping..."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create and push tag
+        if: steps.should_skip.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'false'
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEW_VERSION" -m "Release $NEW_VERSION"
+          git push origin "$NEW_VERSION"
+          echo "✅ Created and pushed tag: $NEW_VERSION"
+
+      - name: Create GitHub Release
+        if: steps.should_skip.outputs.skip == 'false' && steps.check_tag.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NEW_VERSION="${{ steps.new_version.outputs.version }}"
+          LATEST_TAG="${{ steps.latest_tag.outputs.tag }}"
+
+          # Generate changelog grouped by type
+          if [ "$LATEST_TAG" = "v0.0.0" ]; then
+            ALL_COMMITS=$(git log --pretty=format:"%s|||%h" HEAD)
+          else
+            ALL_COMMITS=$(git log --pretty=format:"%s|||%h" $LATEST_TAG..HEAD)
+          fi
+
+          FEATURES=$(echo "$ALL_COMMITS" | grep -E "^feat:|^feature:" | sed 's/|||/ (/; s/$/)/' | sed 's/^/- /' || true)
+          FIXES=$(echo "$ALL_COMMITS" | grep -E "^fix:" | sed 's/|||/ (/; s/$/)/' | sed 's/^/- /' || true)
+          BREAKING=$(echo "$ALL_COMMITS" | grep -E "!:|BREAKING CHANGE:" | sed 's/|||/ (/; s/$/)/' | sed 's/^/- /' || true)
+          OTHER=$(echo "$ALL_COMMITS" | grep -vE "^feat:|^feature:|^fix:|!:|BREAKING CHANGE:" | sed 's/|||/ (/; s/$/)/' | sed 's/^/- /' || true)
+
+          CHANGELOG=""
+          [ -n "$BREAKING" ] && CHANGELOG="${CHANGELOG}### 💥 Breaking Changes\n${BREAKING}\n\n"
+          [ -n "$FEATURES" ] && CHANGELOG="${CHANGELOG}### ✨ Features\n${FEATURES}\n\n"
+          [ -n "$FIXES" ] && CHANGELOG="${CHANGELOG}### 🐛 Bug Fixes\n${FIXES}\n\n"
+          [ -n "$OTHER" ] && CHANGELOG="${CHANGELOG}### 🔧 Other Changes\n${OTHER}\n\n"
+
+          gh release create "$NEW_VERSION" \
+            --title "Release $NEW_VERSION" \
+            --notes "## What's Changed
+
+${CHANGELOG}**Full Changelog**: https://github.com/${{ github.repository }}/compare/$LATEST_TAG...$NEW_VERSION"

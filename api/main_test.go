@@ -29,4 +29,18 @@ func TestMainEndpoints(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
+
+	t.Run("version endpoint should return version info", func(t *testing.T) {
+		e := Server
+
+		req := httptest.NewRequest(http.MethodGet, "/api/public/version", nil)
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.Contains(t, rec.Body.String(), "version")
+		assert.Contains(t, rec.Body.String(), "gitCommit")
+		assert.Contains(t, rec.Body.String(), "buildTime")
+		assert.Contains(t, rec.Body.String(), "goVersion")
+	})
 }

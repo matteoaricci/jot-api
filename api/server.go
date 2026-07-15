@@ -7,6 +7,7 @@ import (
 	"github.com/matteoaricci/jot-api/api/journals"
 	"github.com/matteoaricci/jot-api/api/users"
 	"github.com/matteoaricci/jot-api/middleware"
+	"github.com/matteoaricci/jot-api/version"
 	"net/http"
 )
 
@@ -29,6 +30,10 @@ func AddRouteHandlers(e *echo.Echo, jwtSecret string) {
 		}
 
 		return c.JSON(http.StatusOK, res)
+	})
+
+	e.GET("/api/public/version", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, version.GetInfo())
 	})
 }
 
