@@ -5,6 +5,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/auth"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -50,7 +51,13 @@ func AuthMiddleware(jwtSecret string) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusNotFound)
 			}
 
-			c.Set("userId", claims.UserID)
+			userID, err := strconv.ParseUint(claims.UserID, 10, 64)
+			if err != nil {
+				c.Logger().Warnf("Auth failed for %s %s: invalid user id - %v", c.Request().Method, path, err)
+				return echo.NewHTTPError(http.StatusNotFound)
+			}
+
+			c.Set("userId", userID)
 			c.Set("role", claims.Role)
 
 			return next(c)

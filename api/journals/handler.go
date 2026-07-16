@@ -5,10 +5,13 @@ import (
 	"github.com/matteoaricci/jot-api/models/journal"
 	"github.com/matteoaricci/jot-api/service/journal"
 	"net/http"
+	"strconv"
 )
 
 func AddRoutes(e *echo.Echo) {
 	e.GET("/api/journals", func(c echo.Context) error {
+		userID := c.Get("userId").(uint64)
+
 		var params models.JournalQueryParams
 		bindErr := c.Bind(&params)
 		if bindErr != nil {
@@ -22,7 +25,7 @@ func AddRoutes(e *echo.Echo) {
 			params.Page = 1
 		}
 
-		j, err := journal.All(params)
+		j, err := journal.All(userID, params)
 		if err != nil {
 			return c.JSON(err.Code, err)
 		}
@@ -31,6 +34,8 @@ func AddRoutes(e *echo.Echo) {
 	})
 
 	e.POST("/api/journals", func(c echo.Context) error {
+		userID := c.Get("userId").(uint64)
+
 		var j models.CreateOrPutJournalVM
 
 		err := c.Bind(&j)
@@ -42,7 +47,7 @@ func AddRoutes(e *echo.Echo) {
 			return err
 		}
 
-		newJID, httpErr := journal.Create(j)
+		newJID, httpErr := journal.Create(j, userID)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -51,33 +56,48 @@ func AddRoutes(e *echo.Echo) {
 	})
 
 	e.GET("/api/journals/:id", func(c echo.Context) error {
-		id := c.Param("id")
+		userID := c.Get("userId").(uint64)
 
-		j, err := journal.Get(id)
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		j, httpErr := journal.Get(id, userID)
+		if httpErr != nil {
+			return httpErr
 		}
 
 		return c.JSON(http.StatusOK, *j)
 	})
 
 	e.DELETE("/api/journals/:id", func(c echo.Context) error {
-		id := c.Param("id")
+		userID := c.Get("userId").(uint64)
 
-		err := journal.Delete(id)
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
-			return err
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+
+		httpErr := journal.Delete(id, userID)
+		if httpErr != nil {
+			return httpErr
 		}
 
 		return c.NoContent(http.StatusNoContent)
 	})
 
 	e.PUT("/api/journals/:id", func(c echo.Context) error {
-		id := c.Param("id")
+		userID := c.Get("userId").(uint64)
+
+		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
 
 		var j models.CreateOrPutJournalVM
 
-		err := c.Bind(&j)
+		err = c.Bind(&j)
 		if err != nil {
 			return err
 		}
@@ -86,7 +106,7 @@ func AddRoutes(e *echo.Echo) {
 			return err
 		}
 
-		newJ, httpErr := journal.Put(id, j)
+		newJ, httpErr := journal.Put(id, j, userID)
 		if httpErr != nil {
 			return httpErr
 		}

@@ -7,11 +7,10 @@ import (
 	"github.com/matteoaricci/jot-api/repo"
 	"gorm.io/gorm"
 	"net/http"
-	"strconv"
 )
 
-func Delete(id string) *echo.HTTPError {
-	err := repo.DeleteJournal(id)
+func Delete(id uint64, userID uint64) *echo.HTTPError {
+	err := repo.DeleteJournal(id, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound)
@@ -21,8 +20,8 @@ func Delete(id string) *echo.HTTPError {
 	return nil
 }
 
-func All(params models.JournalQueryParams) (*models.PageOfJournalVMs, *echo.HTTPError) {
-	jRepos, err := repo.GetAllJournals(params)
+func All(userID uint64, params models.JournalQueryParams) (*models.PageOfJournalVMs, *echo.HTTPError) {
+	jRepos, err := repo.GetAllJournals(userID, params)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
@@ -35,8 +34,8 @@ func All(params models.JournalQueryParams) (*models.PageOfJournalVMs, *echo.HTTP
 	return &pageOfVMs, nil
 }
 
-func Get(id string) (*models.JournalVM, *echo.HTTPError) {
-	j, err := repo.GetJournalByID(id)
+func Get(id uint64, userID uint64) (*models.JournalVM, *echo.HTTPError) {
+	j, err := repo.GetJournalByID(id, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
@@ -49,8 +48,8 @@ func Get(id string) (*models.JournalVM, *echo.HTTPError) {
 	return &jVM, nil
 }
 
-func Create(newJournal models.CreateOrPutJournalVM) (*string, *echo.HTTPError) {
-	j, err := repo.CreateJournal(newJournal.Title, newJournal.Description, newJournal.Completed)
+func Create(newJournal models.CreateOrPutJournalVM, userID uint64) (*string, *echo.HTTPError) {
+	j, err := repo.CreateJournal(newJournal.Title, newJournal.Description, newJournal.Completed, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
@@ -66,13 +65,8 @@ func Create(newJournal models.CreateOrPutJournalVM) (*string, *echo.HTTPError) {
 	return &jVM.ID, nil
 }
 
-func Put(id string, journal models.CreateOrPutJournalVM) (*models.JournalVM, *echo.HTTPError) {
-	id64, err := strconv.ParseUint(id, 10, 64)
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
-
-	jRepo, err := repo.UpdateJournal(id64, journal.Title, journal.Description, journal.Completed)
+func Put(id uint64, journal models.CreateOrPutJournalVM, userID uint64) (*models.JournalVM, *echo.HTTPError) {
+	jRepo, err := repo.UpdateJournal(id, journal.Title, journal.Description, journal.Completed, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, echo.NewHTTPError(http.StatusNotFound)

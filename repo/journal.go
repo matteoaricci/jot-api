@@ -26,8 +26,10 @@ func InitJournalRepo(dB *gorm.DB) {
 	db = dB
 }
 
-func GetAllJournals(params models.JournalQueryParams) ([]Journal, error) {
+func GetAllJournals(userID uint64, params models.JournalQueryParams) ([]Journal, error) {
 	m := make(map[string]any)
+	m["user_id"] = userID
+
 	if params.Completed != "" {
 		m["completed"] = params.Completed
 	}
@@ -42,10 +44,10 @@ func GetAllJournals(params models.JournalQueryParams) ([]Journal, error) {
 	return journal, nil
 }
 
-func GetJournalByID(id string) (*Journal, error) {
+func GetJournalByID(id uint64, userID uint64) (*Journal, error) {
 	var journal Journal
 
-	row := db.First(&journal, id)
+	row := db.Where(&Journal{ID: id, UserID: &userID}).First(&journal)
 	if row.Error != nil {
 		return nil, row.Error
 	}
@@ -53,8 +55,8 @@ func GetJournalByID(id string) (*Journal, error) {
 	return &journal, nil
 }
 
-func CreateJournal(title string, description string, completed models.IsCompleted) (*Journal, error) {
-	journal := Journal{Title: title, Description: description, Completed: completed}
+func CreateJournal(title string, description string, completed models.IsCompleted, userID uint64) (*Journal, error) {
+	journal := Journal{Title: title, Description: description, Completed: completed, UserID: &userID}
 	err := db.Create(&journal).Error
 
 	if err != nil {
@@ -64,12 +66,16 @@ func CreateJournal(title string, description string, completed models.IsComplete
 	return &journal, nil
 }
 
-func UpdateJournal(id uint64, title string, description string, completed models.IsCompleted) (*Journal, error) {
-	row := db.First(&Journal{}, id)
+func UpdateJournal(id uint64, title string, description string, completed models.IsCompleted, userID uint64) (*Journal, error) {
+	var journal Journal
+	row := db.Where(&Journal{ID: id, UserID: &userID}).First(&journal)
 	if row.Error != nil {
 		return nil, row.Error
 	}
-	journal := Journal{ID: id, Title: title, Description: description, Completed: completed}
+
+	journal.Title = title
+	journal.Description = description
+	journal.Completed = completed
 
 	if err := db.Save(&journal).Error; err != nil {
 		return nil, err
@@ -78,15 +84,14 @@ func UpdateJournal(id uint64, title string, description string, completed models
 	return &journal, nil
 }
 
-func DeleteJournal(id string) error {
-	row := db.First(&Journal{}, id)
+func DeleteJournal(id uint64, userID uint64) error {
+	var journal Journal
+	row := db.Where(&Journal{ID: id, UserID: &userID}).First(&journal)
 	if row.Error != nil {
 		return row.Error
 	}
 
-	var journal Journal
-
-	err := db.Delete(&journal, id).Error
+	err := db.Delete(&journal).Error
 	if err != nil {
 		return err
 	}

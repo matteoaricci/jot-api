@@ -82,7 +82,12 @@ func TestUserEndpoints(t *testing.T) {
 			rec := httptest.NewRecorder()
 			e.ServeHTTP(rec, req)
 			assert.Equal(t, http.StatusOK, rec.Code)
-			assert.JSONEq(t, `[]`, rec.Body.String())
+
+			var got []map[string]interface{}
+			if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+				t.Fatal(err)
+			}
+			assert.Len(t, got, 3)
 		})
 
 		t.Run("Invalid Params", func(t *testing.T) {
