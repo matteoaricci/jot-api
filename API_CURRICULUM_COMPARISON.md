@@ -1,6 +1,7 @@
 # API Curriculum vs Jot-API Implementation - Comprehensive Comparison
 
 **Generated:** June 10, 2026  
+**Last Updated:** July 16, 2026  
 **Project:** jot-api (Journaling Application)  
 **Curriculum:** Build an API - 78-page training curriculum (TODO List application)
 
@@ -8,12 +9,20 @@
 
 ## Executive Summary
 
-The jot-api project has implemented **approximately 40% of the critical curriculum tasks** and **30% of important tasks**. The application successfully demonstrates core API development concepts but is missing several production-ready features covered in the curriculum.
+The jot-api project has implemented **most of the critical curriculum tasks**. Since the original June 10 report, authorization enforcement, SQL indexes, a version endpoint, real password hashing, and expanded integration tests have all landed. The application now demonstrates core API development concepts end-to-end and is missing mostly production-observability and advanced-integration features.
 
 ### Key Findings:
-- ✅ **Strong Foundation**: Database, migrations, basic CRUD, authentication, Docker support
-- ⚠️  **Missing Production Features**: Telemetry, API documentation (Swagger), admin endpoints, comprehensive testing
+- ✅ **Strong Foundation**: Database, migrations, CRUD, authentication, **resource ownership/authorization**, **SQL indexes**, **bcrypt password hashing**, **version endpoint**, Docker support
+- ⚠️  **Missing Production Features**: Telemetry, API documentation (Swagger — in progress), admin endpoints
 - ❌ **No Advanced Features**: Email, queues, scheduling, external API integration, multiple output formats
+
+### Changes Since Original Report (July 16, 2026):
+- ✅ **Authorization / resource ownership** — journal actions now scoped by `userId`, threaded handler→service→repo (was ⚠️ "enforcement unclear")
+- ✅ **SQL indexes** — migration `20260715180632_add_performance_indexes.sql` (was ❌ missing)
+- ✅ **Version endpoint** — `GET /api/public/version` (was ❌ missing)
+- ✅ **Password hashing** — real bcrypt on sign-up/login (was plaintext, despite the schema comment "should be bcrypt hashed")
+- ✅ **Unique constraint** — partial unique index on `usr.email` for live rows (was ❌ none)
+- ✅ **Integration tests** — testcontainers suite covering auth/journal/entry/user, including ownership scoping and wrong-password login
 
 ### Domain Adaptation:
 The curriculum teaches building a TODO list API, but jot-api is a **journaling application**:
@@ -35,16 +44,16 @@ The curriculum teaches building a TODO list API, but jot-api is a **journaling a
 | 6 | **Pagination** | 🔺 Critical | 21 | ✅ Yes | `?page=X&size=Y` query params | ✅ Complete | Returns `totalRecords`, defaults to page=1, size=10 |
 | 7 | **Database Migration** | 🔺 Critical | 24 | ✅ Yes | Goose migrations in `db/migrations/` | ✅ Complete | 10+ migration files, proper up/down |
 | 8 | **Dockerfile** | 🔺 Critical | 26 | ✅ Yes | `Dockerfile` + `compose.yml` | ✅ Complete | Multi-stage could be better |
-| 9 | **Swagger Docs** | ℹ️ Important | 29 | ❌ No | - | ❌ Missing | No OpenAPI spec |
-| 10 | **Versioning** | ℹ️ Important | 31 | ❓ Unknown | Git tags? | ⚠️ Partial | Need to check git tags, no `/api/version` endpoint |
+| 9 | **Swagger Docs** | ℹ️ Important | 29 | 🚧 In progress | `/api/docs` (planned) | 🚧 In progress | OpenAPI spec being added |
+| 10 | **Versioning** | ℹ️ Important | 31 | ✅ Yes | `GET /api/public/version` | ✅ Complete | Returns build/version info via `version.GetInfo()` |
 | 11 | **Users/Auth** | 🔺 Critical | 33 | ✅ Yes | `POST /api/authenticate`, JWT | ✅ Complete | JWT with email/password |
 | 12 | **TODO Lists** | ℹ️ Important | 36 | ✅ Yes | Journals (one level) | ⚠️ Adapted | Jot doesn't need nested lists, just journal→entries |
 | 13 | **Audit Columns** | 🔺 Critical | 38 | ✅ Yes | `created_at`, `updated_at`, `created_by`, `updated_by` | ✅ Complete | Migration 20250420000200 |
-| 14 | **List Ownership** | 🔺 Critical | 40 | ⚠️ Partial | `user_id` column added | ⚠️ Incomplete | Column exists but authorization logic unclear |
-| 15 | **Title Uniqueness** | ℹ️ Important | 42 | ❌ No | - | ❌ Missing | No unique constraint on journal titles |
+| 14 | **List Ownership** | 🔺 Critical | 40 | ✅ Yes | `user_id` scoping in repo/service/handler | ✅ Complete | All journal actions filter by authenticated `userId`; enforced via JWT middleware |
+| 15 | **Title Uniqueness** | ℹ️ Important | 42 | ⚠️ Partial | Unique index on `usr.email` | ⚠️ Partial | Email uniqueness done; `(user_id, title)` journal uniqueness still not enforced |
 | 16 | **Admin Role** | ℹ️ Important | 44 | ⚠️ Partial | `role` column in `usr` table | ⚠️ Incomplete | Column exists, no admin endpoints |
 | 17 | **Admin Stats** | ℹ️ Important | 46 | ❌ No | - | ❌ Missing | No `/api/admin/system-stats` or `/api/admin/user-stats` |
-| 18 | **SQL Indexing** | ℹ️ Important | 48 | ❌ No | - | ❌ Missing | No indexes on foreign keys or query columns |
+| 18 | **SQL Indexing** | ℹ️ Important | 48 | ✅ Yes | `20260715180632_add_performance_indexes.sql` | ✅ Complete | Indexes on `journal(user_id)`, `entry(journal_id)`, `journal(completed)`, `usr(email)`, composite `(user_id, completed)` |
 | 19 | **External API** | 🔺 Critical | 50 | ❌ No | - | ❌ Missing | No external API integration (PokéAPI example) |
 | 20 | **Telemetry** | ℹ️ Important | 53 | ❌ No | - | ❌ Missing | No Sentry/DataDog/AWS tracing |
 | 21 | **Soft Deletes** | ✅ Useful | 55 | ✅ Yes | `deleted_at` column | ✅ Complete | In `usr` table, also in journal/entry |
@@ -108,13 +117,21 @@ GET    /api/journals/:id/entries  # List entries for a journal
 POST   /api/journals/:id/entries  # Create entry in journal
 ```
 
-**Users:**
+**Users / Auth:**
 ```
-POST   /api/authenticate          # Login (returns JWT)
-POST   /api/sign-up               # Register new user
+POST   /api/public/authenticate   # Login (returns JWT cookie)
+POST   /api/public/sign-up        # Register new user (bcrypt hashed)
 GET    /api/users/:id/journals    # Get user's journals
 DELETE /api/users/:id             # Delete user
 ```
+
+**Public / Meta:**
+```
+GET    /api/public/healthz        # Health check → {"status":"OK"}
+GET    /api/public/version        # Build/version info
+```
+
+> Note: routes under `/api/public/` bypass the auth middleware; all others require a valid JWT cookie.
 
 #### 4. Middleware & Cross-Cutting Concerns
 - **Request Logging**: ✅ Structured JSON logs with:
@@ -164,23 +181,21 @@ DELETE /api/users/:id             # Delete user
    - Curriculum page 50 - Critical skill
    - No example of calling external APIs, SDK usage, error handling
 
-4. **Incomplete Authorization**
-   - List/Journal ownership not enforced in endpoints
-   - User can't be restricted to their own resources
-   - No middleware checking JWT claims
+4. ~~**Incomplete Authorization**~~ ✅ **RESOLVED (July 16)**
+   - Journal ownership now enforced: all actions scoped by authenticated `userId`, threaded handler→service→repo
+   - JWT middleware parses the `userId` claim and populates request context
 
-5. **No Versioning Endpoint**
-   - No `GET /api/version` returning git commit, version tag
-   - Makes debugging production issues harder
+5. ~~**No Versioning Endpoint**~~ ✅ **RESOLVED**
+   - `GET /api/public/version` returns build/version info
 
 #### Important Gaps (Best Practices)
-6. **No SQL Indexes**
-   - Curriculum page 48
-   - Missing indexes on:
+6. ~~**No SQL Indexes**~~ ✅ **RESOLVED**
+   - Migration `20260715180632_add_performance_indexes.sql` adds indexes on:
      - `journal.user_id` (foreign key)
      - `entry.journal_id` (foreign key)
      - `journal.completed` (frequently filtered)
-     - `usr.email` (lookup by email)
+     - `usr.email` (lookup by email) — now a partial *unique* index
+     - composite `journal(user_id, completed)`
 
 7. **No Admin Endpoints**
    - Curriculum pages 44-47
@@ -189,10 +204,10 @@ DELETE /api/users/:id             # Delete user
      - `GET /api/admin/system-stats` (total journals, users, etc.)
      - `GET /api/admin/user-stats` (per-user stats with pagination)
 
-8. **No Uniqueness Constraints**
+8. **Partial Uniqueness Constraints**
    - Curriculum page 42
-   - Journal titles not unique per user
-   - Could cause user confusion
+   - ✅ `usr.email` now has a partial unique index (live rows only, so soft-deleted emails can be reused)
+   - ❌ Journal titles still not unique per user (`(user_id, title)`)
 
 9. **No Audit Table**
    - Curriculum page 61
@@ -279,11 +294,11 @@ id              SERIAL PRIMARY KEY
 created_at      TIMESTAMP
 updated_at      TIMESTAMP
 deleted_at      TIMESTAMP
-email           VARCHAR
-password        VARCHAR          -- should be bcrypt hashed
+email           VARCHAR          -- partial UNIQUE index (deleted_at IS NULL)
+password        VARCHAR          -- bcrypt hashed ✅
 first_name      VARCHAR
 last_name       VARCHAR
-role            VARCHAR          -- added but not used
+role            VARCHAR          -- present; used in JWT claims, no admin endpoints yet
 ```
 
 ### Database Strengths
@@ -292,16 +307,16 @@ role            VARCHAR          -- added but not used
 ✅ Audit columns (`created_by`, `updated_by`)  
 ✅ Database trigger to update journal when entries change  
 ✅ Proper migration history  
+✅ Indexes on foreign keys and filtered columns  
+✅ Partial unique index on `usr.email`  
 
 ### Database Weaknesses
-❌ No indexes on foreign keys or filtered columns  
-❌ No unique constraints (e.g., journal title per user)  
+❌ No unique constraint on journal title per user (`(user_id, title)`)  
 ❌ No `CASCADE` behavior defined for foreign keys  
 ❌ No default values for timestamps at database level  
 ❌ No separate audit log table  
 ❌ No editors/sharing table  
 ❌ No user settings table  
-❌ No indexes documented in migrations  
 
 ---
 
@@ -319,46 +334,35 @@ role            VARCHAR          -- added but not used
 ### ⚠️ Areas for Improvement
 1. **No Tests Running in CI**: Check `.github/workflows/`
 2. **Dockerfile Not Optimized**: Could use multi-stage build to reduce image size
-3. **No API Versioning**: No `/api/v1/` prefix
-4. **Hard-Coded Strings**: App name, version in middleware (should be env vars or build-time constants)
-5. **UserId in Logs**: Field exists but not populated from JWT
-6. **Authorization**: JWT exists but enforcement unclear
-7. **Password Storage**: Assuming bcrypt but need to verify
+3. **No URL API Versioning**: No `/api/v1/` prefix (a `/api/public/version` endpoint exists, but not path versioning)
+4. **Hard-Coded Strings**: App name in middleware (version now sourced from `version` package)
+5. ~~**UserId in Logs**~~ ✅ JWT `userId` now parsed in middleware and available in context
+6. ~~**Authorization**~~ ✅ Enforced — journal actions scoped by `userId`
+7. ~~**Password Storage**~~ ✅ Confirmed bcrypt (was plaintext; fixed July 16)
 
 ---
 
 ## Recommendations by Priority
 
+### ✅ Completed Since Original Report
+
+1. ~~**Implement Authorization Middleware**~~ ✅ Done — JWT `userId` extracted in middleware, journal actions scoped by owner
+2. ~~**Add SQL Indexes**~~ ✅ Done — `20260715180632_add_performance_indexes.sql`
+3. ~~**Create `/api/version` Endpoint**~~ ✅ Done — `GET /api/public/version`
+4. **Add Integration Tests** — ✅ Largely done (testcontainers suite covering auth/journal/entry/user, ownership scoping, wrong-password login); CI wiring still open
+
 ### 🔴 High Priority (Do Next)
 
-1. **Implement Authorization Middleware**
-   - Extract user ID from JWT
-   - Create middleware to check resource ownership
-   - Apply to all journal/entry endpoints
-   - Populate `userId` in request logs
-
-2. **Add SQL Indexes**
-   - Create migration for indexes on:
-     - `journal(user_id)`
-     - `entry(journal_id)`
-     - `journal(completed)`
-     - `usr(email)`
-   - Measure query performance improvement
-
-3. **Create `/api/version` Endpoint**
-   - Return git commit, version tag, build time
-   - Use build-time variables or environment config
-
-4. **Add Integration Tests**
-   - Test full request/response cycles
-   - Test authentication flows
-   - Test authorization (user can't access other user's data)
-   - Set up CI to run tests
-
-5. **API Documentation**
+1. **API Documentation** — 🚧 in progress
    - Generate OpenAPI/Swagger spec
    - Serve at `/api/docs` or `/api/docs/ui`
    - Use annotations or code generation
+
+2. **Wire Tests into CI**
+   - Run the testcontainers suite in `.github/workflows/`
+
+3. **External API Example**
+   - One integration with proper error handling, retries, timeouts (see Medium Priority #9)
 
 ### 🟡 Medium Priority (Production Readiness)
 
@@ -413,10 +417,10 @@ Use this to track what concepts from the curriculum you've learned:
 - [x] Query parameters (filtering, pagination)
 - [x] Database migrations
 - [x] Containerization (Docker, compose)
-- [ ] **API documentation (OpenAPI/Swagger)**
+- [ ] **API documentation (OpenAPI/Swagger)** — 🚧 in progress
 - [x] Authentication (JWT)
-- [x] Password hashing
-- [ ] **Authorization (resource ownership)**
+- [x] Password hashing (bcrypt)
+- [x] Authorization (resource ownership)
 - [x] Soft deletes
 - [x] Audit columns
 - [ ] **External API integration**
@@ -425,10 +429,10 @@ Use this to track what concepts from the curriculum you've learned:
 ### Important Concepts (Should Know)
 - [x] Boolean filtering
 - [x] Pagination with metadata
-- [ ] **API versioning**
-- [ ] Foreign key relationships (done, but could be improved)
-- [ ] **SQL indexing for performance**
-- [ ] **Uniqueness constraints**
+- [x] API versioning (version endpoint)
+- [x] Foreign key relationships
+- [x] SQL indexing for performance
+- [x] Uniqueness constraints (email; journal title still pending)
 - [ ] Admin-only endpoints with role checks
 - [ ] **Group by queries for stats**
 - [ ] CSV output (Accept header negotiation)
@@ -481,13 +485,13 @@ If you want to deploy this to production:
 
 The jot-api project demonstrates a solid understanding of core REST API principles and has implemented the fundamental building blocks well. The domain adaptation from TODO lists to journals is appropriate and well-executed.
 
-**Main strengths**: Database design, CRUD operations, authentication, Docker support, structured logging, migrations.
+**Main strengths**: Database design, CRUD operations, authentication, **authorization/resource ownership**, **bcrypt password hashing**, **SQL indexing**, **version endpoint**, Docker support, structured logging, migrations, integration tests.
 
-**Main gaps**: Authorization enforcement, API documentation, telemetry, admin features, advanced integrations (email, queues, external APIs).
+**Main gaps**: API documentation (in progress), telemetry, admin features, advanced integrations (email, queues, external APIs).
 
-By completing the "High Priority" recommendations, this project would be significantly closer to production-ready. The curriculum provides an excellent roadmap for continued learning and feature development.
+Since the original report, the "High Priority" list has been substantially cleared — authorization, indexes, versioning, password hashing, and integration tests are all in place. Remaining focus is API documentation, then production observability and admin/advanced features.
 
-**Overall Assessment**: Strong foundation (B+), needs production hardening to be deployment-ready.
+**Overall Assessment**: Strong foundation with core production hardening complete (A-); remaining work is observability, docs, and advanced integrations.
 
 ---
 
