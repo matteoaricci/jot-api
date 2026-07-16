@@ -17,14 +17,10 @@ type Usr struct {
 	Role      string         `gorm:"type:text;default:'user'" json:"role"`
 }
 
-func FindUser(email string, password string) (*Usr, error) {
-	m := make(map[string]any)
-	m["email"] = email
-	m["password"] = password
-
+func FindUser(email string) (*Usr, error) {
 	var u Usr
 
-	row := db.Where(m).First(&u)
+	row := db.Where(&Usr{Email: email}).First(&u)
 	if row.Error != nil {
 		return nil, row.Error
 	}

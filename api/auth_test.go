@@ -82,6 +82,22 @@ func TestAuthEndpoints(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
 
+	t.Run("Authenticate existing user with wrong password", func(t *testing.T) {
+		var b bytes.Buffer
+		dummy := userModels.AuthenticateUserVM{
+			Email:    "authtest@example.com",
+			Password: "notthepassword",
+		}
+		if err := json.NewEncoder(&b).Encode(dummy); err != nil {
+			t.Fatal(err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/api/public/authenticate", &b)
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		rec := httptest.NewRecorder()
+		e.ServeHTTP(rec, req)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
 	t.Run("Access protected route without token", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals", nil)
 		rec := httptest.NewRecorder()

@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/auth"
 	"github.com/matteoaricci/jot-api/repo"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
 	"time"
@@ -34,12 +35,16 @@ func ReadAuthCookie(c echo.Context) error {
 }
 
 func AuthenticateUser(email string, password string, jwtSecret string) (*string, *echo.HTTPError) {
-	u, err := repo.FindUser(email, password)
+	u, err := repo.FindUser(email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
+		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
 	claims := &auth.JwtCustomClaims{
@@ -66,7 +71,12 @@ func SignUpUser(firstName string, lastName string, email string, password string
 		role = "user"
 	}
 
-	err := repo.CreateUser(firstName, lastName, email, password, role)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	err = repo.CreateUser(firstName, lastName, email, string(hashed), role)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound)

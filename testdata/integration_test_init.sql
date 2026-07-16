@@ -1,7 +1,8 @@
 -- Seed the user that GetAuthToken authenticates as. Journals are owner-scoped
 -- (journal.user_id REFERENCES usr(id)), so the owner must exist first.
+-- Password is a bcrypt hash of 'testpassword'.
 INSERT INTO usr (id, email, password, first_name, last_name, role)
-VALUES (1, 'testuser@example.com', 'testpassword', 'Test', 'User', 'user');
+VALUES (1, 'testuser@example.com', '$2a$10$yIvuMu8oh3LdVefo.zMEau7qqqsvbT5O.fwzDEAtes9L2Cp3Gf/s6', 'Test', 'User', 'user');
 
 -- usr.id is SERIAL; advance the sequence past the explicit id so later sign-ups don't collide.
 SELECT setval('usr_id_seq', (SELECT MAX(id) FROM usr));
