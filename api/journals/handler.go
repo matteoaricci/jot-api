@@ -1,11 +1,13 @@
 package journals
 
 import (
+	"log/slog"
+	"net/http"
+	"strconv"
+
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/journal"
 	"github.com/matteoaricci/jot-api/service/journal"
-	"net/http"
-	"strconv"
 )
 
 func AddRoutes(e *echo.Echo) {
@@ -25,7 +27,7 @@ func AddRoutes(e *echo.Echo) {
 			params.Page = 1
 		}
 
-		j, err := journal.All(userID, params)
+		j, err := journal.All(c.Request().Context(), userID, params)
 		if err != nil {
 			return c.JSON(err.Code, err)
 		}
@@ -47,7 +49,7 @@ func AddRoutes(e *echo.Echo) {
 			return err
 		}
 
-		newJID, httpErr := journal.Create(j, userID)
+		newJID, httpErr := journal.Create(c.Request().Context(), j, userID)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -60,10 +62,11 @@ func AddRoutes(e *echo.Echo) {
 
 		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
+			slog.WarnContext(c.Request().Context(), "journals: invalid id param", slog.String("id", c.Param("id")))
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
-		j, httpErr := journal.Get(id, userID)
+		j, httpErr := journal.Get(c.Request().Context(), id, userID)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -76,10 +79,11 @@ func AddRoutes(e *echo.Echo) {
 
 		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
+			slog.WarnContext(c.Request().Context(), "journals: invalid id param", slog.String("id", c.Param("id")))
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
-		httpErr := journal.Delete(id, userID)
+		httpErr := journal.Delete(c.Request().Context(), id, userID)
 		if httpErr != nil {
 			return httpErr
 		}
@@ -92,6 +96,7 @@ func AddRoutes(e *echo.Echo) {
 
 		id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 		if err != nil {
+			slog.WarnContext(c.Request().Context(), "journals: invalid id param", slog.String("id", c.Param("id")))
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
@@ -106,7 +111,7 @@ func AddRoutes(e *echo.Echo) {
 			return err
 		}
 
-		newJ, httpErr := journal.Put(id, j, userID)
+		newJ, httpErr := journal.Put(c.Request().Context(), id, j, userID)
 		if httpErr != nil {
 			return httpErr
 		}

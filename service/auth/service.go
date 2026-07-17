@@ -1,16 +1,19 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"net/http"
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/models/auth"
 	"github.com/matteoaricci/jot-api/repo"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"net/http"
-	"time"
 )
 
 func CreateAuthCookie(token string) *http.Cookie {
@@ -34,16 +37,20 @@ func ReadAuthCookie(c echo.Context) error {
 	return c.String(http.StatusOK, "read a cookie")
 }
 
-func AuthenticateUser(email string, password string, jwtSecret string) (*string, *echo.HTTPError) {
-	u, err := repo.FindUser(email)
+func AuthenticateUser(ctx context.Context, email string, password string, jwtSecret string) (*string, *echo.HTTPError) {
+	slog.InfoContext(ctx, "auth.AuthenticateUser")
+
+	u, err := repo.FindUser(ctx, email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			slog.WarnContext(ctx, "auth.AuthenticateUser: user not found")
 			return nil, echo.NewHTTPError(http.StatusNotFound)
 		}
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password)); err != nil {
+		slog.WarnContext(ctx, "auth.AuthenticateUser: password mismatch")
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
@@ -66,7 +73,9 @@ func AuthenticateUser(email string, password string, jwtSecret string) (*string,
 	return &t, nil
 }
 
-func SignUpUser(firstName string, lastName string, email string, password string, role string) *echo.HTTPError {
+func SignUpUser(ctx context.Context, firstName string, lastName string, email string, password string, role string) *echo.HTTPError {
+	slog.InfoContext(ctx, "auth.SignUpUser")
+
 	if role == "" {
 		role = "user"
 	}
@@ -76,9 +85,10 @@ func SignUpUser(firstName string, lastName string, email string, password string
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	err = repo.CreateUser(firstName, lastName, email, string(hashed), role)
+	err = repo.CreateUser(ctx, firstName, lastName, email, string(hashed), role)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
+			slog.WarnContext(ctx, "auth.SignUpUser: not found")
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

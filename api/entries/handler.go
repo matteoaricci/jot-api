@@ -16,7 +16,7 @@ func AddRoutes(e *echo.Echo) {
 
 func getEntriesByJournalID(c echo.Context) error {
 	journalID := c.Param("id")
-	entries, httpErr := entryService.GetByJournalID(journalID)
+	entries, httpErr := entryService.GetByJournalID(c.Request().Context(), journalID)
 	if httpErr != nil {
 		return c.JSON(httpErr.Code, httpErr.Message)
 	}
@@ -32,7 +32,7 @@ func createEntry(c echo.Context) error {
 	if err := entryModels.ValidateEntry(&vm); err != nil {
 		return err
 	}
-	newID, httpErr := entryService.Create(journalID, vm)
+	newID, httpErr := entryService.Create(c.Request().Context(), journalID, vm)
 	if httpErr != nil {
 		return c.JSON(httpErr.Code, httpErr.Message)
 	}

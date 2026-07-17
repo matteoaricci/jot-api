@@ -24,7 +24,7 @@ func (h *Handler) signUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, bindErr.Error())
 	}
 
-	err := auth.SignUpUser(params.FirstName, params.LastName, params.Email, params.Password, params.Role)
+	err := auth.SignUpUser(c.Request().Context(), params.FirstName, params.LastName, params.Email, params.Password, params.Role)
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (h *Handler) authenticate(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, bindErr.Error())
 	}
 
-	t, err := auth.AuthenticateUser(params.Email, params.Password, h.jwtSecret)
+	t, err := auth.AuthenticateUser(c.Request().Context(), params.Email, params.Password, h.jwtSecret)
 	if err != nil {
 		return c.JSON(err.Code, err.Error())
 	}

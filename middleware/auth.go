@@ -1,12 +1,14 @@
 package middleware
 
 import (
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/labstack/echo/v4"
-	"github.com/matteoaricci/jot-api/models/auth"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
+	"github.com/matteoaricci/jot-api/models/auth"
 )
 
 func AuthMiddleware(jwtSecret string) echo.MiddlewareFunc {
@@ -20,7 +22,10 @@ func AuthMiddleware(jwtSecret string) echo.MiddlewareFunc {
 
 			cookie, err := c.Cookie("token")
 			if err != nil {
-				c.Logger().Warnf("Auth failed for %s %s: missing token", c.Request().Method, path)
+				slog.Warn("auth failed: missing token",
+					slog.String("method", c.Request().Method),
+					slog.String("path", path),
+				)
 				return echo.NewHTTPError(http.StatusNotFound)
 			}
 
@@ -36,24 +41,38 @@ func AuthMiddleware(jwtSecret string) echo.MiddlewareFunc {
 			)
 
 			if err != nil {
-				c.Logger().Warnf("Auth failed for %s %s: invalid token - %v", c.Request().Method, path, err)
+				slog.Warn("auth failed: invalid token",
+					slog.String("method", c.Request().Method),
+					slog.String("path", path),
+					slog.String("error", err.Error()),
+				)
 				return echo.NewHTTPError(http.StatusNotFound)
 			}
 
 			if !token.Valid {
-				c.Logger().Warnf("Auth failed for %s %s: token not valid", c.Request().Method, path)
+				slog.Warn("auth failed: token not valid",
+					slog.String("method", c.Request().Method),
+					slog.String("path", path),
+				)
 				return echo.NewHTTPError(http.StatusNotFound)
 			}
 
 			claims, ok := token.Claims.(*auth.JwtCustomClaims)
 			if !ok {
-				c.Logger().Warnf("Auth failed for %s %s: invalid token claims", c.Request().Method, path)
+				slog.Warn("auth failed: invalid token claims",
+					slog.String("method", c.Request().Method),
+					slog.String("path", path),
+				)
 				return echo.NewHTTPError(http.StatusNotFound)
 			}
 
 			userID, err := strconv.ParseUint(claims.UserID, 10, 64)
 			if err != nil {
-				c.Logger().Warnf("Auth failed for %s %s: invalid user id - %v", c.Request().Method, path, err)
+				slog.Warn("auth failed: invalid user id",
+					slog.String("method", c.Request().Method),
+					slog.String("path", path),
+					slog.String("error", err.Error()),
+				)
 				return echo.NewHTTPError(http.StatusNotFound)
 			}
 

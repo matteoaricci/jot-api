@@ -2,20 +2,24 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log/slog"
+	"os"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/matteoaricci/jot-api/api"
 	"github.com/matteoaricci/jot-api/db"
-	"log"
-	"os"
+	"github.com/matteoaricci/jot-api/logger"
 )
 
 func main() {
+	logger.Init()
+
 	runLocally := flag.Bool("local", true, "Run in local mode")
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET environment variable not set")
+		slog.Error("JWT_SECRET environment variable not set")
+		os.Exit(1)
 	}
 
 	e := api.ConstructServer(jwtSecret)
@@ -37,17 +41,20 @@ func main() {
 
 	username := os.Getenv("DB_USERNAME")
 	if username == "" {
-		log.Fatal("DB_USERNAME environment variable not set")
+		slog.Error("DB_USERNAME environment variable not set")
+		os.Exit(1)
 	}
 
 	password := os.Getenv("DB_PASSWORD")
 	if password == "" {
-		log.Fatal("DB_PASSWORD environment variable not set")
+		slog.Error("DB_PASSWORD environment variable not set")
+		os.Exit(1)
 	}
 
 	dbname := os.Getenv("DB_NAME")
 	if dbname == "" {
-		log.Fatal("DB_NAME environment variable not set")
+		slog.Error("DB_NAME environment variable not set")
+		os.Exit(1)
 	}
 
 	db.InitDB(host, port, username, password, dbname, sslmode)
@@ -57,12 +64,13 @@ func main() {
 		serverPort = "8080"
 	}
 
-	fmt.Println("Listening on port: ", serverPort)
+	slog.Info("starting server", slog.String("port", serverPort))
 
 	if *runLocally {
 		err := e.Start(":" + serverPort)
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("server stopped", slog.String("error", err.Error()))
+			os.Exit(1)
 		}
 	} else {
 		lambda.Start(LambdaEchoProxy(e))

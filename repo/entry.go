@@ -1,8 +1,11 @@
 package repo
 
 import (
-	"gorm.io/gorm"
+	"context"
+	"log/slog"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Entry represents the DB model for a journal entry
@@ -18,18 +21,22 @@ type Entry struct {
 }
 
 // CreateEntry inserts a new entry for the given journal
-func CreateEntry(content string, journalID string) (*Entry, error) {
+func CreateEntry(ctx context.Context, content string, journalID string) (*Entry, error) {
+	slog.InfoContext(ctx, "repo.CreateEntry", slog.String("journalId", journalID))
+
 	e := Entry{Content: content, JournalID: journalID}
-	if err := db.Create(&e).Error; err != nil {
+	if err := db.WithContext(ctx).Create(&e).Error; err != nil {
 		return nil, err
 	}
 	return &e, nil
 }
 
 // GetEntriesByJournalID returns all entries for a journal
-func GetEntriesByJournalID(journalID string) ([]Entry, error) {
+func GetEntriesByJournalID(ctx context.Context, journalID string) ([]Entry, error) {
+	slog.InfoContext(ctx, "repo.GetEntriesByJournalID", slog.String("journalId", journalID))
+
 	var entries []Entry
-	if err := db.Where("journal_id = ?", journalID).Find(&entries).Error; err != nil {
+	if err := db.WithContext(ctx).Where("journal_id = ?", journalID).Find(&entries).Error; err != nil {
 		return nil, err
 	}
 	return entries, nil

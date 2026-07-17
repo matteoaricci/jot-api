@@ -1,8 +1,11 @@
 package repo
 
 import (
-	"gorm.io/gorm"
+	"context"
+	"log/slog"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Usr struct {
@@ -17,10 +20,12 @@ type Usr struct {
 	Role      string         `gorm:"type:text;default:'user'" json:"role"`
 }
 
-func FindUser(email string) (*Usr, error) {
+func FindUser(ctx context.Context, email string) (*Usr, error) {
+	slog.InfoContext(ctx, "repo.FindUser")
+
 	var u Usr
 
-	row := db.Where(&Usr{Email: email}).First(&u)
+	row := db.WithContext(ctx).Where(&Usr{Email: email}).First(&u)
 	if row.Error != nil {
 		return nil, row.Error
 	}
@@ -28,7 +33,9 @@ func FindUser(email string) (*Usr, error) {
 	return &u, nil
 }
 
-func CreateUser(firstName string, lastName string, email string, password string, role string) error {
+func CreateUser(ctx context.Context, firstName string, lastName string, email string, password string, role string) error {
+	slog.InfoContext(ctx, "repo.CreateUser")
+
 	u := Usr{
 		Email:     email,
 		Password:  password,
@@ -37,7 +44,7 @@ func CreateUser(firstName string, lastName string, email string, password string
 		Role:      role,
 	}
 
-	row := db.Create(&u)
+	row := db.WithContext(ctx).Create(&u)
 	if row.Error != nil {
 		return row.Error
 	}
@@ -45,8 +52,10 @@ func CreateUser(firstName string, lastName string, email string, password string
 	return nil
 }
 
-func DeleteUser(id string) error {
-	row := db.Delete(&Usr{}, id)
+func DeleteUser(ctx context.Context, id string) error {
+	slog.InfoContext(ctx, "repo.DeleteUser", slog.String("id", id))
+
+	row := db.WithContext(ctx).Delete(&Usr{}, id)
 	if row.Error != nil {
 		return row.Error
 	}

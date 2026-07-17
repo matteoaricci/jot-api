@@ -12,7 +12,7 @@ func AddRoutes(e *echo.Echo) {
 func deleteUser(c echo.Context) error {
 	id := c.Param("id")
 
-	err := user.DeleteUser(id)
+	err := user.DeleteUser(c.Request().Context(), id)
 	if err != nil {
 		return err
 	}

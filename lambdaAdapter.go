@@ -1,12 +1,13 @@
 package main
 
 import (
+	"log/slog"
+	"net/http"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/awslabs/aws-lambda-go-api-proxy/core"
 	echoadapter "github.com/awslabs/aws-lambda-go-api-proxy/echo"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
-	"net/http"
 )
 
 type MyProxy struct {
@@ -14,11 +15,11 @@ type MyProxy struct {
 }
 
 func (m *MyProxy) Flush() {
-	log.Info("in Flush")
+	slog.Info("in Flush")
 }
 
 func (m *MyProxy) FlushError() error {
-	log.Info("in FlushError")
+	slog.Info("in FlushError")
 	return nil
 }
 
