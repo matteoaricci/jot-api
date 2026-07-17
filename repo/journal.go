@@ -99,21 +99,6 @@ func DeleteJournal(id uint64, userID uint64) error {
 	return nil
 }
 
-func GetJournalsByUserID(id string, params models.JournalQueryParams) ([]Journal, error) {
-	m := make(map[string]any)
-
-	m["user_id"] = id
-
-	var journal []Journal
-
-	row := db.Scopes(paginate(params)).Where(m).Find(&journal)
-	if row.Error != nil {
-		return nil, row.Error
-	}
-
-	return journal, nil
-}
-
 func paginate(params models.JournalQueryParams) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 

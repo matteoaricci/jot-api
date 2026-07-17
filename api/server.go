@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/matteoaricci/jot-api/api/auth"
+	"github.com/matteoaricci/jot-api/api/docs"
 	"github.com/matteoaricci/jot-api/api/entries"
 	"github.com/matteoaricci/jot-api/api/journals"
 	"github.com/matteoaricci/jot-api/api/users"
@@ -17,6 +18,7 @@ func AddRouteHandlers(e *echo.Echo, jwtSecret string) {
 	users.AddRoutes(e)
 	entries.AddRoutes(e)
 	auth.AddRoutes(e, jwtSecret)
+	docs.AddRoutes(e)
 
 	e.RouteNotFound("/*", func(c echo.Context) error {
 		return c.NoContent(http.StatusNotFound)

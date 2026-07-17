@@ -99,7 +99,7 @@ func TestAuthEndpoints(t *testing.T) {
 	})
 
 	t.Run("Access protected route without token", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/journals", nil)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -129,7 +129,7 @@ func TestAuthEndpoints(t *testing.T) {
 		}
 		assert.NotNil(t, tokenCookie)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/journals", nil)
 		req.AddCookie(tokenCookie)
 		rec := httptest.NewRecorder()
 		e.ServeHTTP(rec, req)
@@ -137,7 +137,7 @@ func TestAuthEndpoints(t *testing.T) {
 	})
 
 	t.Run("Access protected route with invalid token", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/journals", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  "token",
 			Value: "invalid.token.here",

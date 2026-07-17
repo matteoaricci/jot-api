@@ -73,32 +73,6 @@ func TestUserEndpoints(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 	})
 
-	t.Run("Get User Journals", func(t *testing.T) {
-		authToken := GetAuthToken(t)
-
-		t.Run("No Params", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals", nil)
-			req.AddCookie(authToken)
-			rec := httptest.NewRecorder()
-			e.ServeHTTP(rec, req)
-			assert.Equal(t, http.StatusOK, rec.Code)
-
-			var got []map[string]interface{}
-			if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
-				t.Fatal(err)
-			}
-			assert.Len(t, got, 3)
-		})
-
-		t.Run("Invalid Params", func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/api/users/1/journals?size=foo", nil)
-			req.AddCookie(authToken)
-			rec := httptest.NewRecorder()
-			e.ServeHTTP(rec, req)
-			assert.Equal(t, http.StatusBadRequest, rec.Code)
-		})
-	})
-
 	t.Run("Delete user", func(t *testing.T) {
 		authToken := GetAuthToken(t)
 		req := httptest.NewRequest(http.MethodDelete, "/api/users/1", nil)

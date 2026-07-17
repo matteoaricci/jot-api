@@ -1,0 +1,378 @@
+openapi: 3.0.3
+info:
+  title: jot-api
+  description: >
+    Journaling API. Endpoints under `/api/public/` are unauthenticated; all
+    other endpoints require a valid JWT sent in the `token` cookie (obtained
+    from `POST /api/public/authenticate`).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: auth
+    description: Authentication and registration
+  - name: journals
+    description: Journal CRUD (owner-scoped)
+  - name: entries
+    description: Entries belonging to a journal
+  - name: users
+    description: User-scoped resources
+  - name: meta
+    description: Health and version
+
+paths:
+  /api/public/healthz:
+    get:
+      tags: [meta]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+
+  /api/public/version:
+    get:
+      tags: [meta]
+      summary: Build and version info
+      security: []
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionInfo'
+
+  /api/public/sign-up:
+    post:
+      tags: [auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpUser'
+      responses:
+        '200':
+          description: User created
+        '400':
+          description: Invalid request body
+
+  /api/public/authenticate:
+    post:
+      tags: [auth]
+      summary: Authenticate and receive a JWT cookie
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthenticateUser'
+      responses:
+        '200':
+          description: Authenticated; JWT set in the `token` cookie
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: "token=<jwt>; HttpOnly; Secure"
+        '400':
+          description: Invalid request body
+        '404':
+          description: Unknown email or incorrect password
+
+  /api/journals:
+    get:
+      tags: [journals]
+      summary: List the authenticated user's journals
+      parameters:
+        - $ref: '#/components/parameters/Completed'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+      responses:
+        '200':
+          description: A page of journals
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageOfJournals'
+        '400':
+          description: Invalid query parameters
+    post:
+      tags: [journals]
+      summary: Create a journal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrPutJournal'
+      responses:
+        '201':
+          description: Created; returns the new journal id
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "4"
+        '400':
+          description: Validation failed
+
+  /api/journals/{id}:
+    parameters:
+      - $ref: '#/components/parameters/JournalId'
+    get:
+      tags: [journals]
+      summary: Get a journal by id
+      responses:
+        '200':
+          description: The journal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '400':
+          description: Invalid id
+        '404':
+          description: Not found or not owned by the caller
+    put:
+      tags: [journals]
+      summary: Update a journal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrPutJournal'
+      responses:
+        '200':
+          description: The updated journal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Journal'
+        '400':
+          description: Invalid id or validation failed
+        '404':
+          description: Not found or not owned by the caller
+    delete:
+      tags: [journals]
+      summary: Delete a journal
+      responses:
+        '204':
+          description: Deleted
+        '400':
+          description: Invalid id
+        '404':
+          description: Not found or not owned by the caller
+
+  /api/journals/{id}/entries:
+    parameters:
+      - $ref: '#/components/parameters/JournalId'
+    get:
+      tags: [entries]
+      summary: List entries for a journal
+      responses:
+        '200':
+          description: The journal's entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Entry'
+    post:
+      tags: [entries]
+      summary: Create an entry in a journal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEntry'
+      responses:
+        '201':
+          description: Created; returns the new entry id
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "1"
+        '400':
+          description: Validation failed
+
+  /api/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    delete:
+      tags: [users]
+      summary: Delete a user
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          description: Not found
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
+  parameters:
+    JournalId:
+      name: id
+      in: path
+      required: true
+      description: Journal id
+      schema:
+        type: integer
+        format: int64
+    UserId:
+      name: id
+      in: path
+      required: true
+      description: User id
+      schema:
+        type: integer
+        format: int64
+    Completed:
+      name: completed
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/IsCompleted'
+    Page:
+      name: page
+      in: query
+      required: false
+      description: 1-based page number (defaults to 1)
+      schema:
+        type: integer
+        minimum: 0
+    Size:
+      name: size
+      in: query
+      required: false
+      description: Page size (defaults to 10)
+      schema:
+        type: integer
+        minimum: 0
+
+  schemas:
+    IsCompleted:
+      type: string
+      enum: [true, false, unknown]
+      description: Journal completion state
+
+    CreateOrPutJournal:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        completed:
+          $ref: '#/components/schemas/IsCompleted'
+
+    Journal:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        title:
+          type: string
+        description:
+          type: string
+        completed:
+          $ref: '#/components/schemas/IsCompleted'
+
+    PageOfJournals:
+      type: object
+      properties:
+        totalRecords:
+          type: integer
+        journals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Journal'
+        page:
+          type: integer
+        size:
+          type: integer
+
+    CreateEntry:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    Entry:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "1"
+        content:
+          type: string
+        journalId:
+          type: string
+          example: "1"
+
+    SignUpUser:
+      type: object
+      required: [email, password, firstName, lastName]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        role:
+          type: string
+          description: Optional; defaults to "user"
+
+    AuthenticateUser:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    VersionInfo:
+      type: object
+      properties:
+        gitCommit:
+          type: string
+        version:
+          type: string
+        buildTime:
+          type: string
+        goVersion:
+          type: string
+
+security:
+  - cookieAuth: []
