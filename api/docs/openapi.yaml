@@ -20,6 +20,8 @@ tags:
     description: Entries belonging to a journal
   - name: users
     description: User-scoped resources
+  - name: admin
+    description: Admin-only endpoints (require the admin role)
   - name: meta
     description: Health and version
 
@@ -250,6 +252,36 @@ paths:
         '404':
           description: User not found
 
+  /api/admin/stats:
+    get:
+      tags: [admin]
+      summary: System-wide stats (admin only)
+      responses:
+        '200':
+          description: Aggregate counts across the system
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStats'
+        '403':
+          description: Caller is not an admin
+
+  /api/admin/users/stats:
+    get:
+      tags: [admin]
+      summary: Per-user stats (admin only)
+      responses:
+        '200':
+          description: One row of counts per user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserStats'
+        '403':
+          description: Caller is not an admin
+
 components:
   securitySchemes:
     cookieAuth:
@@ -392,6 +424,30 @@ components:
         role:
           type: string
           description: Role name to assign (e.g. user, admin)
+
+    SystemStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        totalJournals:
+          type: integer
+        totalEntries:
+          type: integer
+        completedJournals:
+          type: integer
+
+    UserStats:
+      type: object
+      properties:
+        userId:
+          type: integer
+        email:
+          type: string
+        journalCount:
+          type: integer
+        entryCount:
+          type: integer
 
     VersionInfo:
       type: object
