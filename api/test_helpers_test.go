@@ -15,12 +15,22 @@ import (
 // seeded journals) and returns an auth token cookie.
 func GetAuthToken(t *testing.T) *http.Cookie {
 	t.Helper()
+	return authTokenFor(t, "testuser@example.com", "testpassword")
+}
 
-	// Authenticate as the user seeded in testdata/integration_test_init.sql
+// GetAdminAuthToken authenticates as the seeded admin user (usr id 2).
+func GetAdminAuthToken(t *testing.T) *http.Cookie {
+	t.Helper()
+	return authTokenFor(t, "adminuser@example.com", "testpassword")
+}
+
+func authTokenFor(t *testing.T, email, password string) *http.Cookie {
+	t.Helper()
+
 	var b bytes.Buffer
 	authParams := userModels.AuthenticateUserVM{
-		Email:    "testuser@example.com",
-		Password: "testpassword",
+		Email:    email,
+		Password: password,
 	}
 	if err := json.NewEncoder(&b).Encode(authParams); err != nil {
 		t.Fatal(err)

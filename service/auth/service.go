@@ -54,9 +54,18 @@ func AuthenticateUser(ctx context.Context, email string, password string, jwtSec
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
+	roleName := ""
+	if u.RoleID != nil {
+		role, err := repo.FindRoleByID(ctx, *u.RoleID)
+		if err != nil {
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		roleName = role.RoleName
+	}
+
 	claims := &auth.JwtCustomClaims{
 		UserID: fmt.Sprintf("%d", u.ID),
-		Role:   u.Role,
+		Role:   roleName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
 		},
@@ -73,11 +82,12 @@ func AuthenticateUser(ctx context.Context, email string, password string, jwtSec
 	return &t, nil
 }
 
-func SignUpUser(ctx context.Context, firstName string, lastName string, email string, password string, role string) *echo.HTTPError {
+func SignUpUser(ctx context.Context, firstName string, lastName string, email string, password string) *echo.HTTPError {
 	slog.InfoContext(ctx, "auth.SignUpUser")
 
-	if role == "" {
-		role = "user"
+	role, err := repo.FindRoleByName(ctx, "user")
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
@@ -85,7 +95,7 @@ func SignUpUser(ctx context.Context, firstName string, lastName string, email st
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	err = repo.CreateUser(ctx, firstName, lastName, email, string(hashed), role)
+	err = repo.CreateUser(ctx, firstName, lastName, email, string(hashed), role.ID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			slog.WarnContext(ctx, "auth.SignUpUser: not found")

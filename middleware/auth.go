@@ -79,6 +79,15 @@ func AuthMiddleware(jwtSecret string) echo.MiddlewareFunc {
 			c.Set("userId", userID)
 			c.Set("role", claims.Role)
 
+			if strings.Contains(path, "/admin/") && claims.Role != "admin" {
+				slog.Warn("auth failed: admin role required",
+					slog.String("method", c.Request().Method),
+					slog.String("path", path),
+					slog.String("role", claims.Role),
+				)
+				return echo.NewHTTPError(http.StatusForbidden)
+			}
+
 			return next(c)
 		}
 	}

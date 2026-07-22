@@ -227,6 +227,29 @@ paths:
         '404':
           description: Not found
 
+  /api/admin/users/{id}/role:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    put:
+      tags: [users]
+      summary: Update a user's role (admin only)
+      description: Requires the admin role. Routes under /admin/ are gated by the auth middleware.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRole'
+      responses:
+        '204':
+          description: Role updated
+        '400':
+          description: Invalid id, missing role, or unknown role
+        '403':
+          description: Caller is not an admin
+        '404':
+          description: User not found
+
 components:
   securitySchemes:
     cookieAuth:
@@ -361,6 +384,14 @@ components:
           type: string
         password:
           type: string
+
+    UpdateUserRole:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          description: Role name to assign (e.g. user, admin)
 
     VersionInfo:
       type: object

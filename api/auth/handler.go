@@ -24,7 +24,7 @@ func (h *Handler) signUp(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, bindErr.Error())
 	}
 
-	err := auth.SignUpUser(c.Request().Context(), params.FirstName, params.LastName, params.Email, params.Password, params.Role)
+	err := auth.SignUpUser(c.Request().Context(), params.FirstName, params.LastName, params.Email, params.Password)
 	if err != nil {
 		return err
 	}
